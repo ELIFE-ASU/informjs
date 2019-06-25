@@ -32,6 +32,8 @@
   },
   "homepage": "https://github.com/elife-asu/informjs#readme",
   "files": [
+    "binding.gyp",
+    "cpp/**/*",
     "lib/**/*",
     "!test/",
     "!docs/",
@@ -40,12 +42,14 @@
   "devDependencies": {
     "@types/jest": "^24.0.15",
     "jest": "^24.8.0",
-    "node-gyp": "^5.0.1",
     "prettier": "^1.18.2",
     "ts-jest": "^24.0.2",
     "tslint": "^5.18.0",
     "tslint-config-prettier": "^1.18.0",
     "typedoc": "^0.14.2",
     "typescript": "^3.5.2"
+  },
+  "dependencies": {
+    "node-gyp": "^5.0.1"
   }
 }
