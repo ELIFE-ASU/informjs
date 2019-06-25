@@ -28,7 +28,8 @@
             "./deps/src/utilities/partitions.c",
             "./deps/src/utilities/random.c",
             "./deps/src/utilities/tpm.c",
-            "./cpp/inform.cpp"
+            "./cpp/inform.cpp",
+            "./cpp/series.cpp"
         ]
     }]
 }
