@@ -1,0 +1,874 @@
+[[utilities]]
+= Utilities
+
+[[binning-time-series]]
+== Binning Time Series
+
+****
+[[inform_range]]
+[source,c]
+----
+double inform_range(double const *series, size_t n, double *min,
+        double *max, inform_error *err);
+----
+Compute the range, minimum and maximum values in a floating-point time series.
+
+*Examples:*
+[source,c]
+----
+inform_error = INFORM_SUCCESS;
+double min, max, rng;
+rng = inform_range(NULL, 6, &min, &max, &err);
+assert(inform_failed(&err));
+assert(rng == 0.0);
+----
+[source,c]
+----
+inform_error = INFORM_SUCCESS;
+double arr[6] = { 0.2, 0.5, -3.2, 1.8, 0.6, 2.3 };
+double min, max, rng;
+rng = inform_range(arr, 0, &min, &max, &err);
+assert(inform_failed(&err));
+assert(rng == 0.0);
+----
+[source,c]
+----
+inform_error = INFORM_SUCCESS;
+double arr[6] = { 0.2, 0.5, -3.2, 1.8, 0.6, 2.3 };
+double min, max, rng;
+rng = inform_range(arr, 6, &min, &max, &err);
+// { min, max, rng } ~ { -3.2, 1.8, 5.0 }
+----
+[source,c]
+----
+inform_error = INFORM_SUCCESS;
+double arr[6] = { 0.2, 0.5, -3.2, 1.8, 0.6, 2.3 };
+double rng = inform_range(arr, 6, NULL, NULL, &err);
+// rng ~ 5.0
+----
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/binning.h`
+****
+
+****
+[[inform_bin]]
+[source,c]
+----
+double inform_bin(double const *series, size_t n, int b, int *binned,
+        inform_error *err);
+----
+Bin a floating-point time series into a finite-state time series with `b` uniform sized
+bins, and return the size of the bins.
+
+If the size of each bin is too small, less than `10*ε`, then all entries are placed in the
+same bin and an error is set. (`ε` is the double-precision machine epsilon.)
+
+*Examples:*
+[source,c]
+----
+int binned[6];
+double series[6] = {1,2,3,4,5,6};
+double bin_size = inform_bin(series, 6, 2, binned, &err);
+assert(bin_size == 2.5);
+// binned ~ {0,0,0,1,1,1}
+----
+[source,c]
+----
+int binned[6];
+double series[6] = {1,2,3,4,5,6};
+double bin_size = inform_bin(series, 6, 3, binned, &err);
+assert(bin_size == 5.0/3.0);
+// binned ~ {0,0,1,1,2,2}
+----
+[source,c]
+----
+int binned[6];
+double series[6] = {1,2,3,4,5,6};
+double bin_size = inform_bin(series, 6, 6, binned, &err);
+assert(bin_size == 5.0/3.0);
+// binned ~ {0,1,2,3,4,5}
+----
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/binning.h`
+****
+
+****
+[[inform_bin_step]]
+[source,c]
+----
+int inform_bin_step(double const *series, size_t n, double step,
+        int *binned, inform_error *err);
+----
+Bin a floating-point time series into a number bins of a specified size `step`, and return
+the number of bins.
+
+If the bin size is too small, less than `10*ε`, then an error is set. (`ε` is the
+double-precision machine epsilon.)
+
+*Examples:*
+[source,c]
+----
+int binned[6];
+double series[6] = {1,2,3,4,5,6};
+int n = inform_bin_step(series, 6, 2.0, binned, &err);
+assert(n == 3);
+// binned ~ {0,0,1,1,2,2}
+----
+[source,c]
+----
+int binned[6];
+double series[6] = {1,2,3,4,5,6};
+int n = inform_bin(series, 6, 2.5, binned, &err);
+assert(n == 3);
+// binned ~ {0,0,0,1,1,2}
+----
+[source,c]
+----
+int binned[6];
+double series[6] = {1,2,3,4,5,6};
+int n = inform_bin(series, 6, 1.0, binned, &err);
+assert(n == 6);
+// binned ~ {0,1,2,3,4,5}
+----
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/binning.h`
+****
+
+****
+[[inform_bin_bounds]]
+[source,c]
+----
+int inform_bin_bounds(double const *series, size_t n,
+        double const *bounds, size_t m, int *binned,
+        inform_error *err);
+----
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/binning.h`
+****
+
+[[black-boxing-time-series]]
+== Black-Boxing Time Series
+It is often useful when analyzing complex systems to black-box components of the system.
+This process amounts to grouping components of the system and treating them as a single
+entity, without regard for its small-scale structure. As an example, consider you have two
+Boolean random variables stem:[X] and stem:[Y], and you observe time series of each
+simultaneously:
+[stem]
+++++
+X:\ \{0,1,1,0,1,0,0,1\}\\
+Y:\ \{1,0,0,1,1,0,1,0\}
+++++
+It may be worthwhile to consider these observations as observations of the joint
+variable stem:[(X,Y)]:
+[stem]
+++++
+(X,Y):\ \{(0,1),(1,0),(1,0),(0,1),(1,1),(0,0),(0,1),(1,0)\}.
+++++
+The joint observations can then be naturally encoded, for example, as base-4 states
+[stem]
+++++
+(X,Y):\ \{1,2,2,1,3,0,1,2\}.
+++++
+We refer this process of mapping the observations of stem:[X] and stem:[Y] to the encoded
+observations of stem:[(X,Y)] as black boxing. In this case, the black boxing procedure is
+performed in "space" (you might think of stem:[X] and stem:[Y] having locations in space).
+We may also black box in time. The canonical example of this is considering the
+stem:[k]-history of a random variable:
+[stem]
+++++
+X:\       \{0,1,1,0,1,0,0,1\}\\
+X^{(2)}:\ \{((0,1),(1,1),(1,0),(0,1),(1,0),(0,0),(0,1)\},
+++++
+and the observations of stem:[X^{(2)}] can be encoded as base-4 states:
+[stem]
+++++
+X^{(2)}:\ \{(1,3,2,1,2,0,1\}.
+++++
+
+We provide a basic black-boxing function that allows the user to black-box in both space and
+into the future and past of a collection of random variable <<inform_black_box>>. The
+<<inform_black_box_parts>> allows the user to black-box time series based on a
+<<partitioning-time-series,partitioning scheme>> (useful in the implementation of
+integration measures such as <<evidence-of-integration>>).
+
+****
+[[inform_black_box]]
+[source,c]
+----
+int *inform_black_box(int const *series, size_t l, size_t n, size_t m,
+        int const *b, size_t const *r, size_t const *s, int *box,
+        inform_error *err);
+----
+Black-box a collection of `l` time series (each with shape `(n,m)`) with bases `b` into a
+single time series with base `b[0]*...*b[l-1]`. History lengths for each time series may be
+provided through `r` and future lengths through `l`.
+
+*Examples:*
+
+_Example 1_: Black-box two time series with no history or futures:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[16] = {
+    0,1,1,0,1,0,0,1,
+    1,0,0,1,1,0,1,0,
+};
+int b[2] = {2,2};
+
+int box[8];
+inform_black_box(series, 2, 1, 8, b, NULL, NULL, box, &err);
+assert(!err);
+// box ~ { 1 2 2 1 3 0 1 2 }
+----
+This is the first example described in <<black-boxing-time-series>>.
+
+_Example 2_: Black-box a single time series in time with history length 2:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[8] = {
+    0,1,1,0,1,0,0,1,
+};
+int b = 2;
+
+size_t r = 2;
+int box[7];
+inform_black_box(series, 1, 1, 8, &b, &r, NULL, box, &err);
+assert(!err);
+// box ~ { 1 3 2 1 2 0 1 }
+----
+This is the second example described in <<black-boxing-time-series>>.
+
+_Example 3_: Black-box two time series with histories and futures:
+In this example we consider two time series:
+[stem]
+++++
+X:\ \{0,1,1,0,1,0,0,1\}\\
+Y:\ \{1,0,0,1,1,0,1,0\}
+++++
+and produce observations of stem:[(X^{(2,0)},Y^{(1,1)})]
+[stem]
+++++
+(X^{(2,0)},Y^{(1,1)}):\ \{(0,1,0,0),(1,1,0,1),(1,0,1,1),(0,1,1,0),(1,0,0,1),(0,0,1,0)\}
+++++
+encoded as
+[stem]
+++++
+(X^{(2,0)},Y^{(1,1)}):\ \{4,13,11,6,9,2\}.
+++++
+
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[16] = {
+    0,1,1,0,1,0,0,1,
+    1,0,0,1,1,0,1,0,
+};
+int b[2] = {2,2};
+
+size_t r[2] = {2,1};
+size_t s[2] = {0,1};
+int box[6];
+inform_black_box(series, 2, 1, 8, b, r, s, box, &err);
+assert(!err);
+// box ~ { 4 13 11 6 9 2 }
+----
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/black_boxing.h`
+****
+
+****
+[[inform_black_box_parts]]
+[source,c]
+----
+int *inform_black_box_parts(int const *series, size_t l, size_t n,
+        int const *b, size_t const *parts, size_t nparts, int *box,
+        inform_error *err);
+----
+Black-box `l` time series (each of length `n`) with bases `b` into `nparts` time series
+according to the partitioning scheme `parts`. The resulting time series and their bases are
+stored in `box` and returned. The `box` must have enough space to store the black-boxed time
+series AND the base of each of the resulting time series. That is `length(box) >= nparts * n
++ nparts`. If `box == NULL`, then exactly enough space is allocated for result.
+
+See <<partitioning-time-series>> for more information about partitioning schemes.
+
+*Examples:*
+
+_Example 1_: Black-box 4 time series (each of length 8) into a single time series
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[32] = {
+    0,1,1,0,1,0,0,1,
+    1,0,0,1,1,0,1,0,
+    0,0,0,1,1,1,0,0,
+    1,0,1,0,1,1,1,0,
+};
+int b[4] = {2,2,2,2};
+
+size_t parts[4] = {0,0,0,0};
+size_t nparts = 1; // max(parts) + 1
+int *box = inform_black_box_parts(series, 4, 8, b, parts, nparts, NULL, &err);
+assert(!err);
+// box ~ {
+//   5 8 9 6 15 3 5 8   # the time series for the 0st (and only) partition
+//   16                 # the base of the time series
+// }
+free(box);
+----
+This could have been more simply using <<inform_black_box>>, but it is illustrative.
+
+_Example 2_: Black-box 4 time series (of length 8) into two time series using the
+partitioning scheme `(0,1,1,0)`. That is, combine the 0th and 4th, and the 1st and 2nd.
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[32] = {
+    0,1,1,0,1,0,0,1,
+    1,0,0,1,1,0,1,0,
+    0,0,0,1,1,1,0,0,
+    1,0,1,0,1,1,1,0,
+};
+int b[4] = {2,2,2,2};
+
+size_t parts[4] = {0,1,1,0};
+size_t nparts = 2; // max(parts) + 1
+int *box = inform_black_box_parts(series, 4, 8, b, parts, nparts, NULL, &err);
+assert(!err);
+// box ~ {
+//   1 2 3 0 3 1 1 2    # the time series for the 0th partition
+//   2 0 0 3 3 1 2 0    # the time series for the 1st partition
+//   4 4                # the bases for the time series (in order)
+// }
+----
+Note that the two time series each have a base of 4, and the bases are returned as the last
+two elements of `box`.
+
+_Example 3_: Multivariate Mutual Information of Partitions
+In this example, we compute the multivariate mutual information between 4 time series (each
+of length 8) for all partitionings of the system (except the very first since that only
+yields a single time series). That is, each partition is treated as a seperate variable and
+the mutual information is computed between the partitioned variables.
+[source,c]
+----
+#include <assert.h>
+#include <inform/utilities.h>
+#include <inform/mutual_info.h>
+#include <stdio.h>
+
+int main()
+{
+        #define L 4
+        #define N 8
+
+        inform_error err = INFORM_SUCCESS;
+        int const series[L*N] = {
+            0,1,1,0,1,0,0,1,
+            1,0,0,1,1,0,1,0,
+            0,0,0,1,1,1,0,0,
+            1,0,1,0,1,1,1,0,
+        };
+        int b[L] = {2,2,2,2};
+
+        int box[L + L*N]; // make sure there's enough space for the finest partitioning
+
+        size_t *parts = inform_first_partitioning(L);
+        size_t nparts = 1;
+        while((nparts = inform_next_partitioning(parts, L)))
+        {
+            inform_black_box_parts(series, L, N, b, parts, nparts, box, &err);
+            assert(!err);
+
+            int *bases = box + N*nparts;
+            double mi = inform_mutual_info(box, nparts, N, bases, &err);
+            assert(!err);
+            printf("%0.3lf ", mi);
+        }
+        printf("\n");
+}
+----
+prints
+[source,plain]
+----
+0.610 0.954 1.217 1.220 1.000 1.311 1.360 1.311 1.000 1.360 1.360 1.360 1.406 1.409 
+----
+This example is tantalizingly close to an implementation of <<evidence-of-integration>>.
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/black_boxing.h`
+****
+
+[[coalescing-time-series]]
+== Coalescing Time Series
+Information measures over time series are invariant under any change of encoding that does
+not change the relative occurrance of each symbol. For example, the following time series
+have the same entropy:
+[stem]
+++++
+A = \{5,2,2,5,2,5,5,2\} \\
+B = \{1,0,0,1,0,1,1,0\}.
+++++
+Each of the time series has an effective base of 2, but their apparent bases are different:
+5 and 2, respectively. The result is that computations using stem:[A] require
+stem:[log_2{5}\times] more memory due to larger _potential_ state spaces. They also tend to
+run a bit slower since many information-theoretic algorithms have runtimes that trend with
+the volume of the state space.
+
+The `inform_coalesce` function maps a time series to a new time series whose effective base
+is the same as its apparent base: e.g. maps stem:[A \mapsto B].
+****
+[[inform_coalesce]]
+[source,c]
+----
+int inform_coalesce(int const *series, size_t n, int *coal,
+        inform_error *err);
+----
+Reduce the apparent base of a time series to its effective base by removing "gaps" between
+observed states.
+
+*Examples:*
+
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[8] = {5,2,2,5,2,5,5,2}; // A
+int coal[8];
+int b = inform_coalesce(series, 8, coal, &err);
+assert(!err);
+assert(b == 2);
+// coal ~ { 1 0 0 1 0 1 1 0 } // B
+----
+
+Note that we ensure that if stem:[a_i <= a_j], then stem:[b_i <= b_j] for all stem:[i,j].
+This ensures that if the the apparent base of the time series is the effective base, then
+the time series is unchanged.
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[8] = {2,1,0,0,1,2,1,3};
+int coal[8];
+int b = inform_coalesce(series, 8, coal, &err);
+assert(!err);
+assert(b == 4);
+// coal ~ { 2 1 0 0 1 2 1 3 } // the time series is unchanged
+----
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/coalesce.h`
+****
+
+[[encoding-states]]
+== Encoding/Decoding States
+Many of *Inform*'s implementations require that states be encoded as integers. Two
+functions, <<inform_encode>> and <<inform_decode>> handle encoding and decoding states
+to and from integers, respectively.
+
+****
+[[inform_encode]]
+[source,c]
+----
+int32_t inform_encode(int const *state, size_t n, int b,
+        inform_error *err);
+----
+Encode a base-`b` state with `n`-digits as a 32-bit integer.
+
+*Examples:*
+
+Binary States:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int32_t code;
+
+code = inform_encode((int[]){1,0,0}, 3, 2, &err);
+assert(!err && code == 4);
+
+code = inform_encode((int[]){0,1,0}, 3, 2, &err);
+assert(!err && code == 2);
+
+code = inform_encode((int[]){1,0,1}, 3, 2, &err);
+assert(!err && code == 5);
+----
+
+Base-4 States:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int32_t code;
+
+code = inform_encode((int[]){3,0,0}, 3, 4, &err);
+assert(!err && code == 48);
+
+code = inform_encode((int[]){0,3,0}, 3, 4, &err);
+assert(!err && code == 12);
+
+code = inform_encode((int[]){2,2,1}, 3, 4, &err);
+assert(!err && code == 41);
+----
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/encode.h`
+****
+
+****
+[[inform_decode]]
+[source,c]
+----
+void inform_decode(int32_t encoding, int b, int *state, size_t n,
+        inform_error *err);
+----
+Decode a 32-bit integer as a base-`b` state with `n`-digits.
+
+*Examples:*
+
+Binary States:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int state[3];
+
+inform_decode(4, 2, state, 3, &err);
+// state ~ { 1 0 0 }
+
+inform_decode(2, 2, state, 3, &err);
+// state ~ { 0 1 0 }
+
+inform_decode(5, 2, state, 3, &err);
+// state ~ { 1 0 1 }
+----
+
+Base-4 States:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int state[3];
+
+inform_decode(48, 4, state, 3, &err);
+// state ~ { 3 0 0 }
+
+inform_decode(12, 4, state, 3, &err);
+// state ~ { 0 3 0 }
+
+inform_decode(41, 4, state, 3, &err);
+// state ~ { 2 2 1 }
+----
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/encode.h`
+****
+
+[[partitioning-time-series]]
+== Partitioning Time Series
+Many analyses of complex systems consider partitioning of the system into components or
+modules. One example of this is <<evidence-of-integration>>.
+
+For generality, we represent a partitioning of stem:[N] items into stem:[1 \leq M \leq N]
+partitions as a sequence of integers stem:[p_1, \ldots, p_N] where stem:[0 \leq p_i < M]
+is the partition to which the stem:[i]-th item belongs.
+
+As an example, suppose we partitioned stem:[\{X_1, X_2, X_3\}] as stem:[\{\{X_1\},
+\{X_2,X_3\}\}]. This would be represented as stem:[(0,1,1)] because stem:[X_1] belongs to
+the zeroth partition and stem:[X_2,X_3] belong to the first partition.
+
+We provide two functions to facilitate the generation of all unique partitionings of a
+system of `N` elements: <<inform_first_partitioning>> and <<inform_next_partitioning>>.
+
+****
+[[inform_first_partitioning]]
+[source,c]
+----
+size_t *inform_first_partitioning(size_t n);
+----
+Return the first partitioning of `n` items. This is *always* the coarsest partitioning — the
+partitioning with a single partition. The returned array must be freed by the user.
+
+*Examples:*
+[source,c]
+----
+size_t *part = inform_first_partitioning(2);
+assert(part);
+// part ~ { 0 0 }
+free(part);
+----
+
+[source,c]
+----
+size_t *part = inform_first_partitioning(5);
+assert(part);
+// part ~ { 0 0 0 0 0 }
+free(part);
+----
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/partitions.h`
+****
+
+****
+[[inform_next_partitioning]]
+[source,c]
+----
+size_t inform_next_partitioning(size_t *xs, size_t n);
+----
+Provided a partitioning `xs` of `n` items, find the next partitioning. The old partitioning
+is overwritten by the new partitioning, and the number of partitions is returned. Zero is
+returned if no more partitions remain.
+
+*Examples:*
+
+Say we wish to partition 3 items:
+[source,c]
+----
+void print_partitioning(size_t *part, size_t n)
+{
+    for (size_t i = 0; i < n; ++i) printf("%ld ", part[i]);
+    printf("\n");
+}
+
+int main()
+{
+    size_t const size = 3;
+
+    size_t *part = inform_first_partitioning(size);
+    size_t npart = 1;
+
+    print_partitioning(part, size);
+    while ((npart = inform_next_partitioning(part, size)))
+    {
+        print_partitioning(part, size);
+    }
+}
+----
+We'll get the following output
+
+[source,plain]
+----
+0 0 0 // {{X_1, X_2, X_3}}
+0 0 1 // {{X_1, X_2}, {X_3}}
+0 1 0 // {{X_1, X_3}, {X_2}}
+0 1 1 // {{X_1}, {X_2, X_3}}
+0 1 2 // {{X_1}, {X_2}, {X_3}}
+----
+You'll notice that this is equal too the third
+https://en.wikipedia.org/wiki/Bell_number[Bell number] stem:[B_3 = 5].
+
+We can compute the 9-th Bell number as follows:
+[source,c]
+----
+size_t const size = 9;
+size_t *part = inform_first_partitioning(size);
+size_t npart = 1, bell_number = 1;
+while ((npart = inform_next_partitioning(part,size)))
+{
+    bell_number += 1;
+}
+assert(bell_number == 21147);
+----
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/partitions.h`
+****
+
+[[random-time-series]]
+== Random Time Series
+It is sometimes useful to generate random time series, particularly when testing functions.
+Since we've implemented a few functions which take care of the memory allocation, etc..., we
+decided to expose them.
+
+****
+[[inform_random_seed]]
+[source,c]
+----
+void inform_random_seed();
+----
+Seed the random number generated based on the current clock-time.
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/random.h`
+****
+
+****
+[[inform_random_int]]
+[source,c]
+----
+int inform_random_int(int a, int b);
+----
+Generate a random integer in the range stem:[[a,b)].
+
+*Example:*
+
+[source,c]
+----
+srand(2018);
+for (size_t i = 0; i < 10; ++i)
+{
+    printf("%d ", inform_random_int(0, 2));
+}
+printf("\n");
+----
+
+prints
+
+[source,plain]
+----
+1 1 1 0 1 0 0 0 1 1 
+----
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/random.h`
+****
+
+****
+[[inform_random_ints]]
+[source,c]
+----
+int *inform_random_ints(int a, int b, size_t n);
+----
+Generate an array `n` random integers in the range stem:[[a,b)].
+
+*Example:*
+
+[source,c]
+----
+srand(2018);
+int *arr = inform_random_ints(0, 2, 10);
+assert(arr);
+for (size_t i = 0; i < 10; ++i)
+{
+    printf("%d ", arr[i]);
+}
+printf("\n");
+free(arr);
+----
+
+prints
+
+[source,plain]
+----
+1 1 1 0 1 0 0 0 1 1 
+----
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/random.h`
+****
+
+****
+[[inform_random_series]]
+[source,c]
+----
+int *inform_random_series(size_t n, int b);
+----
+Generate a base-`b` "time series" of `n` time steps.
+
+*Example:*
+
+[source,c]
+----
+srand(2018);
+int *series = inform_random_series(10, 2);
+assert(series);
+for (size_t i = 0; i < 10; ++i)
+{
+    printf("%d ", series[i]);
+}
+printf("\n");
+free(series);
+----
+
+prints
+
+[source,plain]
+----
+1 1 1 0 1 0 0 0 1 1 
+----
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/random.h`
+****
+
+[[transition-probability-matrix]]
+== Time Series to TPM
+Some information measures are defined on transition probability matrices (TPM), e.g.
+<<effective-information>>. For this reason, we provide a function <<inform_tpm>> which
+estimates the one-time-step TPM from time series data.
+
+****
+[[inform_tpm]]
+[source,c]
+----
+double *inform_tpm(int const *series, size_t n, size_t m, int b,
+        double *tpm, inform_error *err);
+----
+Estimate the one-time-step transition probability matrix stem:[A] from a time series. The
+element stem:[A_{ij}] is the probability of transitioning to state stem:[j] in the next time
+step given the system is in state stem:[i].
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[15] = {0,2,1,0,1,2,0,1,2,1,0,0,2,1,1};
+double *tpm = inform_tpm(series, 1, 15, 3, NULL, &err);
+assert(!err);
+// tpm ~ { 0.20 0.40 0.40
+//         0.40 0.20 0.40
+//         0.25 0.75 0.00 }
+free(tpm);
+----
+
+Multiple initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[14] = {
+    0,0,
+    0,1,
+    0,1,
+    0,1,
+    1,0,
+    1,1,
+    2,2,
+};
+double *tpm = inform_tpm(series, 7, 2, 3, NULL, &err);
+assert(!err);
+// tpm ~ { 0.25 0.75 0.00
+//         0.50 0.50 0.00
+//         0.00 0.00 1.00 }
+free(tpm);
+----
+
+[horizontal]
+Headers::
+    `inform/utilities.h`,
+    `inform/utilities/tpm.h`
+****

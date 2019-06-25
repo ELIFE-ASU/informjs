@@ -1,0 +1,729 @@
+[[empirical-distributions]]
+= Empirical Distributions
+
+The link:index.html#inform_dist[`inform_dist`] struct provides an _empirical_ distribution,
+i.e. a histogram, representing the observed frequencies of some fixed-sized set of events.
+This structure is the basis for all of the fundamental information measures provided on
+discrete probability distributions.
+
+The purpose of the link:index.html#inform_dist[`inform_dist`] is to make writing custom
+implementations of information-theoretic measures possible. Most of the measures implemented
+in *Inform* use this structure at their core.
+
+[horizontal]
+Type::
+    <<inform_dist,inform_dist>>
+Allocation::
+    <<inform_dist_alloc,inform_dist_alloc>>,
+    <<inform_dist_realloc,inform_dist_realloc>>,
+    <<inform_dist_copy,inform_dist_copy>>,
+    <<inform_dist_dup,inform_dist_dup>>,
+    <<inform_dist_create,inform_dist_create>>,
+    <<inform_dist_infer,inform_dist_infer>>,
+    <<inform_dist_approximate,inform_dist_approximate>>,
+    <<inform_dist_uniform,inform_dist_uniform>>
+Deallocation::
+    <<inform_dist_free,inform_dist_free>>
+Accessors/Mutators::
+    <<inform_dist_size,inform_dist_size>>,
+    <<inform_dist_counts,inform_dist_counts>>,
+    <<inform_dist_is_valid,inform_dist_is_valid>>,
+    <<inform_dist_get,inform_dist_get>>,
+    <<inform_dist_set,inform_dist_set>>,
+    <<inform_dist_tick,inform_dist_tick>>,
+    <<inform_dist_accumulate,inform_dist_accumulate>>
+Probabilities::
+    <<inform_dist_prob,inform_dist_prob>>,
+    <<inform_dist_dump,inform_dist_dump>>
+
+[[dist-type]]
+== Distribution Type
+****
+[[inform_dist]]
+[source,c]
+----
+typedef struct inform_distribution
+{
+    /// the histogram or array of observation frequencies
+    uint32_t *histogram;
+    /// the size of the support
+    size_t size;
+    /// the number of observations made so far
+    uint64_t counts;
+} inform_dist;
+----
+A distribution of observed event frequencies
+
+This structure is the basis for almost all of the calculations performed via the library. It
+provides a means of managing observations and converting the observed event frequencies to
+probabilities.
+
+A distribution can be allocated with a set number of observable events
+(<<inform_dist_alloc,inform_dist_alloc>>), resized
+(<<inform_dist_realloc,inform_dist_realloc>>), copied
+(<<inform_dist_copy,inform_dist_copy>>) or duplicated (<<inform_dist_dup,inform_dist_dup>>).
+Once the distribution has served its purpose, it can be free'd
+(<<inform_dist_free,inform_dist_free>>).
+
+The distribution is, roughly, a histogram with finite support. The events are assumed to be
+mapped to the dense set of integers stem:[\{0,1,\ldots,N-1\}] where stem:[N] is the number
+of observable events. The number of observable events can be extracted with
+<<inform_dist_size,inform_dist_size>>.
+
+Events can be observed one at a time (<<inform_dist_tick,inform_dist_tick>>) or in batches
+(<<inform_dist_set,inform_dist_set>>). The occurrence frequency of a given event can be
+obtained (<<inform_dist_get,inform_dist_get>>) as can the total number of observations
+(<<inform_dist_counts,inform_dist_counts>>).
+
+Once the distribution populated, the probabilities can be extracted in either
+element-by-element (<<inform_dist_prob,inform_dist_prob>>) or dumped to a dynamically
+allocated array (<<inform_dist_dump,inform_dist_dump>>).
+
+Whenever the size of the support or the number of observed events is zero, the distribution
+is considered invalid meaning that you can't trust any probabilities extracted from it. One
+can use <<inform_dist_is_valid,inform_dist_is_valid>> to assess the validity of the
+distribution.
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+[[dist-allocation]]
+== Allocation
+****
+[[inform_dist_alloc]]
+[source,c]
+----
+inform_dist* inform_dist_alloc(size_t n);
+----
+Allocate a distribution with a specified support size.
+
+The allocation will fail and return `NULL` if either `n == 0` or the memory allocation fails
+for whatever reason.
+
+Immediately following allocation, the distribution is invalid.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = inform_dist_alloc(0);
+assert(dist == NULL);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_alloc(2);
+assert(dist != NULL);
+assert(dist->size == 2);
+assert(dist->counts == 0);
+// dist->histogram ~ {0,0}
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_realloc]]
+[source,c]
+----
+inform_dist* inform_dist_realloc(inform_dist *dist, size_t n);
+----
+Resize the distribution to have new support.
+
+If the distribution is `NULL`, a new distribution of the requested size is allocated.
+
+If the distribution already has the requested size, then the original distribution is
+returned. If the requested size is greater than the current size, then the newly observable
+events are assigned zero frequency. If the requested size is less than the current size,
+then the discarded events are lost and the observation count is adjusted accordingly.
+
+Note that the distribution cannot be reduced to size `0`. In that case the distribution is
+left unmodified.
+
+In the event that the reallocation fails, the original distribution is left untouched.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = inform_dist_alloc(2);
+assert(dist);
+// dist->histogram ~ {0,0}
+
+inform_dist *bigger = inform_dist_realloc(dist, 5);
+assert(bigger);
+// bigger->histogram ~ {0,0,0,0,0}
+
+inform_dist *smaller = inform_dist_realloc(bigger, 3);
+assert(smaller != NULL);
+// smaller->histogram ~ {0,0,0}
+
+inform_dist_free(smaller);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_copy]]
+[source,c]
+----
+inform_dist* inform_dist_copy(inform_dist const *src,
+        inform_dist *dest);
+----
+Copy a distribution to a destination.
+
+If the source distribution is `NULL`, then the destination is left untouched and `NULL` is
+returned.
+
+In the event that the destination is `NULL` or has a different size from that of the source,
+the destination is reallocated, and the result is returned.
+
+*Examples:*
+[source,c]
+----
+inform_dist *source = inform_dist_alloc(5);
+assert(source);
+for (int i = 0; i < (int) source->size; ++i)
+    source->histogram[i] = i;
+// source->histogram ~ {0,1,2,3,4};
+
+inform_dist *target = inform_dist_alloc(5);
+assert(target);
+
+inform_dist_copy(source, target);
+// target->histogram ~ {0,1,2,3,4};
+
+inform_dist_free(target);
+inform_dist_free(source);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_dup]]
+[source,c]
+----
+inform_dist* inform_dist_dup(inform_dist const *dist);
+----
+Duplicate a distribution.
+
+This function simply duplicates a distribution, essentially allocating a new distribution
+and copying the contents of the source to the new distribution.
+
+If the allocation fails or the source distribution is `NULL`, then the return value is
+`NULL`.
+
+*Examples:*
+[source,c]
+----
+inform_dist *source = inform_dist_alloc(5);
+assert(source);
+for (int i = 0; i < (int) source->size; ++i)
+    source->histogram[i] = i;
+// source->histogram ~ {0,1,2,3,4};
+
+inform_dist *target = inform_dist_dup(source);
+assert(target);
+// target->histogram ~ {0,1,2,3,4};
+
+inform_dist_free(target);
+inform_dist_free(source);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_create]]
+[source,c]
+----
+inform_dist* inform_dist_create(uint32_t const *data, size_t n);
+----
+Create a distribution from an underlying histogram.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = inform_dist_create((int[5]){0,1,2,3,4}, 5);
+assert(dist);
+// dist->histogram ~ {0,1,2,3,4}
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_infer]]
+[source,c]
+----
+inform_dist* inform_dist_infer(int const *events, size_t n);
+----
+Infer a distribution from a collection of observed events.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = inform_dist_infer((int[]){0,0,1,0,1}, 5);
+assert(dist);
+// dist->histogram ~ {3,2}
+inform_dist_free(dist);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_infer((int[]){0,0,1,0,1,2,2,1}, 8);
+// dist->histogram ~ {3,3,2}
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_approximate]]
+[source,c]
+----
+inform_dist* inform_dist_approximate(double const *probs, size_t n,
+        double tol);
+----
+Approximate a given probability distribution to a given tolerance.
+
+*Examples:*
+[source,c]
+----
+double probs[3] = {0.5, 0.2, 0.3};
+inform_dist *dist = inform_dist_approximate(probs, 3, 1e-3);
+assert(dist);
+// dist->histogram ~ {5, 2, 3}
+inform_dist_free(dist);
+----
+[source,c]
+----
+double probs[2] = {1./3, 2./3};
+inform_dist *dist = inform_dist_approximate(probs, 2, 1e-3);
+assert(dist);
+// dist->histogram ~ {1, 2}
+inform_dist_free(dist);
+----
+[source,c]
+----
+double probs[4] = {1./3, 1./3, 1./6, 1./6};
+inform_dist *dist = inform_dist_approximate(probs, 4, 1e-3);
+assert(dist);
+// dist->histogram ~ {333,333,166,166}
+inform_dist_free(dist);
+----
+[source,c]
+----
+double probs[4] = {1./7, 2./7, 1./3, 10./42};
+inform_dist *dist = inform_dist_approximate(probs, 4, 1e-3);
+assert(dist);
+// dist->histogram ~ {142,285,333,238}
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_uniform]]
+[source,c]
+----
+inform_dist* inform_dist_uniform(size_t n);
+----
+Create a uniform distribution of a given size.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = inform_dist_uniform(0);
+assert(dist == NULL);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_uniform(3);
+assert(dist);
+// dist->histogram ~ {1,1,1}
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+[[dist-deallocation]]
+== Deallocation
+****
+[[inform_dist_free]]
+[source,c]
+----
+void inform_dist_free(inform_dist *dist);
+----
+Free all dynamically allocated memory associated with a distribution.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+inform_dist_free(dist);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_alloc(3);
+assert(dist);
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+[[dist-access]]
+== Accessors/Mutators
+****
+[[inform_dist_size]]
+[source,c]
+----
+size_t inform_dist_size(inform_dist const *dist);
+----
+Get the size of the distribution's support.
+
+If the distribution is `NULL`, then a support of `0` is returned.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+assert(inform_dist_size(dist) == 0);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_uniform(5);
+assert(dist);
+assert(inform_dist_size(dist) == 5);
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_counts]]
+[source,c]
+----
+uint64_t inform_dist_counts(inform_dist const *dist);
+----
+Get the total number of observations so far made.
+
+If the distribution is `NULL`, then return `0`.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+assert(inform_dist_counts(dist) == 0);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_uniform(5);
+assert(dist);
+assert(inform_dist_counts(dist) == 5);
+inform_dist_set(dist,2) = 4;
+inform_dist_set(dist,3) = 3;
+assert(inform_dist_counts(dist) == 10);
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_is_valid]]
+[source,c]
+----
+bool inform_dist_is_valid(inform_dist const *dist);
+----
+Determine whether or not the distribution is valid.
+
+In order to safely extract probabilities, the distribution must be non-`NULL`, the size of
+the support must be non-zero and the number of observations must be non-zero. In any other
+case, the distribution is invalid.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+assert(!inform_dist_is_valid(dist));
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_alloc(3);
+assert(dist);
+assert(!inform_dist_is_valid(dist));
+inform_dist_free(dist);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_uniform(5);
+assert(dist);
+assert(inform_dist_is_valid(dist));
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_get]]
+[source,c]
+----
+uint32_t inform_dist_get(inform_dist const *dist, size_t event);
+----
+Get the number of occurrences of a given event.
+
+If the distribution is `NULL` or the `event` is not in the support, `0` is returned.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+assert(inform_dist_get(dist, 0) == 0);
+assert(inform_dist_get(dist, 1) == 0);
+assert(inform_dist_get(dist, 2) == 0);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_create((int[]){3,2,1,0}, 4);
+assert(dist);
+assert(inform_dist_get(dist, 0) == 3);
+assert(inform_dist_get(dist, 1) == 2);
+assert(inform_dist_get(dist, 2) == 1);
+assert(inform_dist_get(dist, 3) == 0);
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_set]]
+[source,c]
+----
+uint32_t inform_dist_set(inform_dist *dist, size_t event, uint32_t x);
+----
+Set the number of occurrences of a given event.
+
+This function manually sets the number of occurrences of a given event.  Note that the only
+restriction is that the value be positive. This means that this function can be used to
+invalidate the distribution by changing all of the event frequencies to zero.
+
+If the event is not in the support or the distribution is `NULL`, then nothing happens and
+zero is returned.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+assert(inform_dist_set(dist, 0, 5) == 0);
+assert(inform_dist_get(dist, 0) == 0);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_alloc(2);
+
+assert(inform_dist_set(dist, 0, 3) == 3);
+assert(inform_dist_set(dist, 1, 7) == 7);
+
+assert(inform_dist_get(dist, 0) == 3);
+assert(inform_dist_get(dist, 1) == 7);
+
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_tick]]
+[source,c]
+----
+uint32_t inform_dist_tick(inform_dist *dist, size_t event);
+----
+Increment the number of observations of a given event.
+
+As an alternative to inform_dist_set, this function simply increments the number of
+occurrences of a given event. This is useful for when iteratively observing events.
+
+If the event is not in the support or the distribution is `NULL`, then
+nothing happens and zero is returned.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+assert(inform_dist_tick(dist, 0) == 0);
+assert(inform_dist_tick(dist, 1) == 0);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_create((int[]){2,4}, 2);
+
+assert(inform_dist_tick(dist, 0) == 3);
+assert(inform_dist_tick(dist, 1) == 5);
+
+assert(inform_dist_get(dist, 0) == 3);
+assert(inform_dist_get(dist, 1) == 5);
+
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_accumulate]]
+[source,c]
+----
+size_t inform_dist_accumulate(inform_dist *dist, int const *events,
+        size_t n);
+----
+Accumulate observations from a series.
+
+If an invalid distribution is provided, no events will be observed (0 will be returned). If
+an invalid event is provided, then the number of valid events to that point will be
+returned.
+
+*Examples:*
+[source,c]
+----
+int const events[5] = {0,0,1,0,1};
+assert(inform_dist_accumulate(NULL, events, 5) == 0);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_create((int[]){1,2,3}, 3);
+assert(dist);
+assert(inform_dist_accumulate(dist, NULL, 5) == 0);
+inform_dist_free(dist);
+----
+[source,c]
+----
+int const events[5] = {0,0,1,0,1};
+inform_dist *dist = inform_dist_create((int[]){1,2}, 2);
+assert(dist);
+assert(inform_dist_accumulate(dist, events, 5) == 5);
+// dist->histogram ~ { 4, 4 }
+inform_dist_free(dist);
+----
+[source,c]
+----
+int const events[5] = {0,1,1,3,1};
+inform_dist *dist = inform_dist_create((int[]){1,2}, 2);
+assert(dist);
+assert(inform_dist_accumulate(dist, events, 5) == 3);
+// dist->histogram ~ { 2, 4 }
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+[[dist-probabilities]]
+== Probabilities
+****
+[[inform_dist_prob]]
+[source,c]
+----
+double inform_dist_prob(inform_dist const *dist, size_t event);
+----
+Extract the probability of an event.
+
+This function simply computes the probability of a given event and returns that value.
+
+If the event is not in the support, the distribution is `NULL`, or no observations have yet
+been made, then a zero probability is returned.
+
+*Examples:*
+[source,c]
+----
+inform_dist *dist = NULL;
+assert(inform_dist_prob(dist, 0) == 0.0);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_create((int[]){2,2,4}, 3);
+assert(dist);
+assert(inform_dist_prob(dist, 0) == 0.25);
+assert(inform_dist_prob(dist, 1) == 0.25);
+assert(inform_dist_prob(dist, 2) == 0.50);
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
+
+****
+[[inform_dist_dump]]
+[source,c]
+----
+size_t inform_dist_dump(inform_dist const *dist, double *probs,
+        size_t n);
+----
+Dump the probabilities of all events to an array.
+
+This function computes the probabilities of all of the events in the support, stores them in
+the provided array, and the number of values written.
+
+If the distribution is `NULL`, -1 is returned. If the destination is NULL, -2 is returned.
+If `n` is not equal to the distribution's support, -3 is returned.
+
+*Examples:*
+[source,c]
+----
+double probs[3];
+assert(inform_dist_dump(NULL, probs, 3) == -1);
+----
+[source,c]
+----
+inform_dist *dist = inform_dist_create((int[]){2,2,4}, 3);
+assert(dist);
+assert(inform_dist_dump(dist, NULL, 3) == -2);
+inform_dist_free(dist);
+----
+[source,c]
+----
+double probs[3];
+inform_dist *dist = inform_dist_create((int[]){2,2,4}, 3);
+assert(dist);
+assert(inform_dist_dump(dist, NULL, 2) == -3);
+inform_dist_free(dist);
+----
+[source,c]
+----
+double probs[3];
+inform_dist *dist = inform_dist_create((int[]){2,2,4}, 3);
+assert(dist);
+assert(inform_dist_dump(dist, NULL, 3) == 0);
+// probs ~ { 0.25, 0.25, 0.50 };
+inform_dist_free(dist);
+----
+[horizontal]
+Header::
+    `inform/dist.h`
+****
