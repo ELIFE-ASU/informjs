@@ -38,7 +38,7 @@ namespace inform {
 
             auto const len = array->ByteLength() / sizeof(int32_t);
             auto const data = static_cast<int32_t*>(array->GetContents().Data());
-			auto series = Series(data, data+len);
+            auto series = Series(data, data+len);
 
             return Just(series);
         }

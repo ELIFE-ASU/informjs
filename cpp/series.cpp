@@ -1,22 +1,9 @@
 #include "./series.h"
 
-#include <algorithm>
 #include <inform/mutual_info.h>
 #include <inform/transfer_entropy.h>
-#include <numeric>
 
 using namespace v8;
-
-template <typename Iterator, typename Type = typename std::iterator_traits<Iterator>::value_type>
-auto series_base(Iterator start, Iterator stop) -> Type {
-    return std::accumulate(start, stop, Type{2},
-        [](Type x, Type y) { return std::max(x, y + 1); });
-}
-
-template <typename Container, typename Type = typename Container::value_type>
-auto series_base(Container series) -> Type {
-    return series_base(series.begin(), series.end());
-}
 
 auto inform::mutual_info(FunctionCallbackInfo<Value> const& args) -> void {
     auto isolate = args.GetIsolate();
