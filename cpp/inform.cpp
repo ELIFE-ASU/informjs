@@ -1,5 +1,4 @@
-#include <node.h>
-#include <v8.h>
+#include "./inform.h"
 
 using namespace v8;
 
@@ -7,27 +6,20 @@ auto add(FunctionCallbackInfo<Value> const& args) -> void {
     auto isolate = args.GetIsolate();
 
     if (args.Length() < 2) {
-        auto msg = String::NewFromUtf8(isolate, "two arguments required",
-            NewStringType::kNormal);
-        isolate->ThrowException(Exception::TypeError(msg.ToLocalChecked()));
-        return;
+        return inform::throws(isolate, Exception::TypeError, "two arguments are required");
     }
 
-    if (!args[0]->IsNumber()) {
-        auto msg = String::NewFromUtf8(isolate, "first argument is not a number",
-            NewStringType::kNormal);
-        isolate->ThrowException(Exception::TypeError(msg.ToLocalChecked()));
-        return;
+	auto const maybe_a = inform::get_number<Number, double>(args[0]);
+    if (maybe_a.IsNothing()) {
+        return inform::throws(isolate, Exception::TypeError, "first argument is not a number");
     }
 
-    if (!args[1]->IsNumber()) {
-        auto msg = String::NewFromUtf8(isolate, "second argument is not a number",
-            NewStringType::kNormal);
-        isolate->ThrowException(Exception::TypeError(msg.ToLocalChecked()));
-        return;
+	auto const maybe_b = inform::get_number<Number, double>(args[1]);
+    if (maybe_b.IsNothing()) {
+        return inform::throws(isolate, Exception::TypeError, "second argument is not a number");
     }
 
-    auto value = args[0].As<Number>()->Value() + args[1].As<Number>()->Value();
+    auto value = maybe_a.FromJust() + maybe_b.FromJust();
 
     args.GetReturnValue().Set(Number::New(isolate, value));
 }
