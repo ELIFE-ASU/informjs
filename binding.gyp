@@ -29,7 +29,8 @@
             "./deps/src/utilities/random.c",
             "./deps/src/utilities/tpm.c",
             "./cpp/inform.cpp",
-            "./cpp/series.cpp"
+            "./cpp/series.cpp",
+            "./cpp/util.cpp"
         ],
         "include_dirs": [
             "./deps/include",
