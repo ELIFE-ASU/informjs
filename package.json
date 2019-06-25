@@ -1,6 +1,6 @@
 {
   "name": "informjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A wrapper for the Inform information analysis library",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -34,7 +34,8 @@
   "files": [
     "binding.gyp",
     "cpp/**/*",
-    "deps/**/*",
+    "deps/**/*.c",
+    "deps/**/*.h",
     "lib/**/*",
     "!test/",
     "!docs/",
