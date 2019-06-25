@@ -9,12 +9,12 @@ auto inform::add(FunctionCallbackInfo<Value> const& args) -> void {
         return inform::throws(isolate, Exception::TypeError, "two arguments are required");
     }
 
-	auto const maybe_a = inform::get_number<Number, double>(args[0]);
+    auto const maybe_a = inform::get_number<Number, double>(args[0]);
     if (maybe_a.IsNothing()) {
         return inform::throws(isolate, Exception::TypeError, "first argument is not a number");
     }
 
-	auto const maybe_b = inform::get_number<Number, double>(args[1]);
+    auto const maybe_b = inform::get_number<Number, double>(args[1]);
     if (maybe_b.IsNothing()) {
         return inform::throws(isolate, Exception::TypeError, "second argument is not a number");
     }
