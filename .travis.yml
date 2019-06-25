@@ -23,6 +23,7 @@ cache:
 
 before_install:
   - eval "${MATRIX_EVAL}"
+  - gcc --version
 
 install:
   - npm install
