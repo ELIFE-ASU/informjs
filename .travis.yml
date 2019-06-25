@@ -1,6 +1,14 @@
 matrix:
   include:
     - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: osx
       osx_image: xcode9.4
 
@@ -12,6 +20,9 @@ sudo: required
 cache:
   directories:
     - node_modules
+
+before_install:
+  - eval "${MATRIX_EVAL}"
 
 install:
   - npm install
