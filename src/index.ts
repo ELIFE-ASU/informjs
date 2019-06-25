@@ -1,5 +1,5 @@
 const informcpp = require('../build/Release/informcpp');
 
-export function add(a: number, b: number): number {
-    return informcpp.add(a, b);
+export function mutualInfo(xs: number[], ys: number[]): number {
+    return informcpp.mutualInfo(xs, ys);
 }
