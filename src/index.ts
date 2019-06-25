@@ -1,3 +1,5 @@
+const informcpp = require('../build/Release/informcpp');
+
 export function add(a: number, b: number): number {
-    return a + b;
+    return informcpp.add(a, b);
 }
