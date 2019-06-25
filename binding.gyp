@@ -30,6 +30,10 @@
             "./deps/src/utilities/tpm.c",
             "./cpp/inform.cpp",
             "./cpp/series.cpp"
+        ],
+        "include_dirs": [
+            "./deps/include",
+            "./deps/ginger/include"
         ]
     }]
 }
