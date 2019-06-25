@@ -1,0 +1,355 @@
+:inform_error: <<inform_error,inform_error>>
+[[error-handling]]
+= Error Handling
+
+[[error-handling-intro]]
+== Introduction
+
+Much of the time invested in *Inform* has been ensuring that errors are properly handled.
+Since *Inform* is designed to be used both natively and wrapped for use in another language,
+we needed a simple way to provide error information while still being complete. The result
+was the {inform_error} enumeration.
+
+Most of *Inform*'s functions take a pointer to an {inform_error} as a last argument. This
+allows the function to pass error information up the call stack. Below is a standard example
+of how to handle errors which arise during standard usage:
+
+[source,c]
+----
+size_t const n = 1, m = 7, k = 2;
+
+// expect only binary states
+int const base = 2;
+// state 5 is invalid
+int const series[] = {0,0,1,1,2,0,1};
+
+// Don't forget to initialize the error
+inform_error err = INFORM_SUCCESS;
+double ai = inform_active_info(series, n, m, k, base, &err);
+if (inform_failed(&err))
+{
+    // ERROR: time series has states inconsistent with expected base
+    fprintf(stderr, "ERROR: %s\n", inform_strerror(&err));
+    return -1;
+}
+----
+
+Most functions also return a value which signifies erroneous results. If the user is
+uninterested in the specific error message, then they can simply ignore it by passing a
+`NULL` pointer.
+
+[source,c]
+----
+double ai = inform_active_info(series, n, m, k, base, NULL);
+if (isnan(ai))
+{
+    fprintf(stderr, "ERROR: an error occurred in computing AI\n");
+    return -1;
+}
+----
+
+We *strongly* recommend that you handle errors. This is both good style and helps immensely
+when there's actually a problem.
+
+This covers the most common use cases for non-developers. If you are a developer, we
+strongly suggest that you review the rest of the <<error-handling-api,error handling API>>.
+Otherwise, you'd probably be better served by moving on to the more interesting stuff such
+as <<time-series-measures, Time Series Measures>>.
+
+[[error-handling-api]]
+== API Documentation
+
+All of the error handling API is provided by the `inform/error.h` header. The user rarely
+has to explicitly include this header since most of the work-horse functions are bring this
+header along.
+
+[horizontal]
+Type Definitions::
+    <<inform_error,inform_error>>
+Macros::
+    <<inform_error_macro,INFORM_ERROR>>,
+    <<inform_error_return_macro,INFORM_ERROR_RETURN>>,
+    <<inform_error_return_void_macro,INFORM_ERROR_RETURN_VOID>>
+Error Tests::
+    <<inform_succeeded,inform_succeeded>>,
+    <<inform_failed,inform_failed>>
+Error Messages::
+    <<inform_strerror,inform_strerror>>
+
+****
+[[inform_error]]
+[source,c]
+----
+typedef enum { ... } inform_error;
+----
+
+.Descriptions of *Inform*'s Error Tags
+|===
+| Error Tag | Description
+
+| `INFORM_SUCCESS`
+| no error occurred
+
+| `INFORM_FAILURE`
+| an unspecified error occurred
+
+| `INFORM_EFAULT`
+| invalid pointer
+
+| `INFORM_EARG`
+| invalid argument
+
+| `INFORM_ENOMEM`
+| malloc/calloc/realloc failed
+
+| `INFORM_ETIMESERIES`
+| time series is NULL
+
+| `INFORM_ENOSOURCES`
+| time series has no sources
+
+| `INFORM_ENOINITS`
+| time series has no initial conditions
+
+| `INFORM_ESHORTSERIES`
+| time series has less than two time steps
+
+| `INFORM_EKZERO`
+| history length is zero
+
+| `INFORM_EKLONG`
+| history is too long for the time series
+
+| `INFORM_EBASE`
+| the provided base is invalid
+
+| `INFORM_ENEGSTATE`
+| time series has negative state
+
+| `INFORM_EBADSTATE`
+| time series has states inconsistent with expected base
+
+| `INFORM_EDIST`
+| invalid distribution
+
+| `INFORM_EBIN`
+| invalid binning
+
+| `INFORM_EENCODE`
+| cannot encode state
+
+| `INFORM_ETPM`
+| invalid TPM
+
+| `INFORM_ETPMROW`
+| all zero row in transition probability matrix
+
+| `INFORM_ESIZE`
+| invalid size
+
+| `INFORM_EPARTS`
+| invalid partitioning
+|===
+
+[horizontal]
+Header:: `inform/error.h`
+****
+
+****
+[[inform_error_macro]]
+[source,c]
+----
+#define INFORM_ERROR(ERR, TAG)
+----
+Set an error pointer `ERR` to a particular error `TAG`. If `ERR` is `NULL`, this is
+essentially a noop.
+
+*Example:*
+[source,c]
+----
+int *allocate_array(size_t n, inform_error *err)
+{
+    int *data = malloc(n * sizeof(int));
+    if (!data)
+    {
+        INFORM_ERROR(err, INFORM_ENOMEM);
+    }
+    return data;
+}
+----
+
+[horizontal]
+Header::
+    `inform/error.h`
+See also::
+    <<inform_error_return_macro, INFORM_ERROR_RETURN>>,
+    <<inform_error_return_void_macro, INFORM_ERROR_RETURN_VOID>>
+****
+
+****
+[[inform_error_return_macro]]
+[source,c]
+----
+#define INFORM_ERROR_RETURN(ERR, TAG, RET)
+----
+Set an error pointer `ERR` to a particular error `TAG`, and return a value `RET`. If `ERR`
+is `NULL`, this is essentially a just a return statement.
+
+*Example:*
+[source,c]
+----
+int *double_values(int *array, size_t n, inform_error *err)
+{
+    if (!array)
+    {
+        INFORM_ERROR_RETURN(err, INFORM_EFAULT, array);
+    }
+    for (size_t i = 0; i < n; ++i)
+    {
+        array[i] *= 2;
+    }
+    return array;
+}
+----
+
+[horizontal]
+Header::
+    `inform/error.h`
+See also::
+    <<inform_error, INFORM_ERROR>>,
+    <<inform_error_return_void_macro, INFORM_ERROR_RETURN_VOID>>
+****
+
+****
+[[inform_error_return_void_macro]]
+[source,c]
+----
+#define INFORM_ERROR_RETURN_VOID(ERR, TAG)
+----
+Set an error pointer `ERR` to a particular error `TAG`, and return void. If `ERR` is `NULL`,
+this is essentially a just a return statement.
+
+*Example:*
+[source,c]
+----
+void double_values(int *array, size_t n, inform_error *err)
+{
+    if (!array)
+    {
+        INFORM_ERROR_RETURN(err, INFORM_EFAULT);
+    }
+    for (size_t i = 0; i < n; ++i)
+    {
+        array[i] *= 2;
+    }
+}
+----
+
+[horizontal]
+Header::
+    `inform/error.h`
+See also::
+    <<inform_error_macro, INFORM_ERROR>>,
+    <<inform_error_return_macro, INFORM_ERROR_RETURN>>
+****
+
+****
+[[inform_succeeded]]
+[source,c]
+----
+bool inform_succeeded(inform_error const *err);
+----
+Return `true` if the value of the error pointer signifies *success*.
+
+This function will only return `true` if either `err == NULL` or `*err == INFORM_SUCCESS`.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+
+// Successes
+assert(inform_succeeded(NULL));
+assert(inform_succeeded(&err));
+
+// Failures
+err = INFORM_FAILURE;
+assert(!inform_succeeded(&err));
+err = INFORM_ENOMEM;
+assert(!inform_succeeded(&err));
+----
+
+[horizontal]
+Header::
+    `inform/error.h`
+See also::
+    <<inform_error, inform_error>>,
+    <<inform_failed, inform_failed>>
+****
+
+****
+[[inform_failed]]
+[source,c]
+----
+bool inform_failed(inform_error const *err);
+----
+Return `true` if the value of the error pointer signifies *failure*.
+
+This function will only return `true` if both `err != NULL` and `*err != INFORM_SUCCESS`.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+
+// Successes
+assert(!inform_succeeded(NULL));
+assert(!inform_succeeded(&err));
+
+// Failures
+err = INFORM_FAILURE;
+assert(inform_succeeded(&err));
+err = INFORM_ENOMEM;
+assert(inform_succeeded(&err));
+----
+
+[horizontal]
+Header::
+    `inform/error.h`
+See also::
+    <<inform_error, inform_error>>,
+    <<inform_succeeded, inform_succeeded>>
+****
+
+****
+[[inform_strerror]]
+[source,c]
+----
+char const *inform_strerror(inform_error const *err);
+----
+Return a string describing an error.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+
+// Successes
+assert(strcmp(inform_strerror(NULL), "no error occurred") == 0);
+assert(strcmp(inform_strerror(&err), "no error occurred") == 0);
+
+// Failures
+err = INFORM_FAILURE;
+assert(strcmp(inform_strerror(&err),
+              "an unspecified error occurred") == 0);
+err = INFORM_ENOMEM;
+assert(strcmp(inform_strerror(&err),
+              "malloc/calloc/realloc failed") == 0);
+----
+
+[horizontal]
+Header::
+    `inform/error.h`
+See also::
+    <<inform_error, inform_error>>
+****

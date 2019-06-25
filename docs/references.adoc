@@ -1,0 +1,69 @@
+[[references]]
+[bibliography]
+= References
+
+- [[[Bialek2001a]]] Bialek, W., Nemenman, I. and Naftali, T. (2001)
+    "link:https://dx.doi.org/10.1162/089976601753195969[Predictability, complexity, and
+    learning]". _Neural computation_. *13* (11): 2409-2463.  doi:10.1162/089976601753195969
+
+- [[[Bialek2001b]]] Bialek, W., Nemenman, I. and Naftali, T. (2001)
+    "link:https://dx.doi.org/10.1016/S0378-4371(01)00444-7[Complexity through nonextensivity]"
+    _Physica A_. *302* (1): 89-99. doi:10.1016/S0378-4371(01)00444-7
+
+- [[[Biehl2016]]] Biehl, M., Ikegami, T. and Polani, D. (2016)
+    "link:https://dx.doi.org/10.7551/978-0-262-33936-0-ch115[Towards information based
+    spatiotemporal patterns as a foundation for agent representation in dynamical systems]".
+    _Proceedings of the Artificial Life Conference 2016_. 722-9.
+    doi:10.7551/978-0-262-33936-0-ch115
+
+- [[[Cover1991]]] Cover, T.M and Thomas, J.A. (1991) "Elements of information theory". New
+    York: Wiley. ISBN 0-471-06259-6.
+
+- [[[Crutchfield2003]]] Crutchfield, J.P. and Feldman D.P. (2003)
+    "link:https://dx.doi.org/doi/10.1063/1.1530990[Regularities unseen, randomness observed:
+    Levels of entropy convergence]". _Chaos_. *13* (1): 25-54. doi:10.1063/1.1530990.
+
+- [[[Feldman2003]]] Feldman, D.P. and Crutchfield, J.P. (2003)
+    "link:https://dx.doi.org/10.1103/PhysRevE.67.051104[Structural
+    information in two-dimensional patterns: Entropy convergence and excess entropy]".
+    _Physical Review E_. *67* (5): 051104. doi:10.1103/PhysRevE.67.051104.
+
+- [[[Hoel2013]]] Hoel, E.P., Albantakis, L. and Tononi, G. (2013)
+    "link:https://dx.doi.org/10.1073/pnas.1314922110[Quantifying causal emergence shows that
+    macro can beat micro]". _Proceedings of the National Academy of Sciences_. *110* (4):
+    19790-19795. doi:10.1073/pnas.1314922110.
+
+- [[[Hoel2017]]] Hoel, E.P. (2017) "link:https://dx.doi.org/10.3390/e19050188[When the map
+    is better than the territory]". *19* (5): 188. doi:10.3390/e19050188.
+
+- [[[Kullback1951]]] Kullback, S. and Leibler, R.A. (1951)
+    "link:https://dx.doi.org/10.1214/aoms/1177729694[On information an sufficiency]". _Annals
+    of Mathematical Statistics_. *22* (1): 79-86.  doi:10.1214/aoms/1177729694. MR 39968.
+
+- [[[Lizier2008]]] Lizier, J.T., Prokopenko, M. and Zomaya, A.Y. (2008)
+    "link:https://dx.doi.org/10.1103/PhysRevE.77.026110[Local information transfer as a
+    spatiotemporal filter for complex systems]". _Physical Review E_. *77* (2): 026110.
+    doi:10.1103/PhysRevE.77.026110.
+
+- [[[Lizier2010]]] Lizier, J.T., Prokopenko, M. and Zomaya, A.Y. (2010)
+    "link:https://dx.doi.org/10.1063/1.3486801[Information modification and particle
+    collisions in distributed computation]". _Chaos_. *20* (3): 037109.
+    doi:10.1063/1.3486801.
+
+- [[[Lizier2012]]] Lizier, J.T., Prokopenko, M. and Zomaya, A.Y. (2012)
+    "link:https://dx.doi.org/10.1016/j.ins.2012.04.016[Local measures of information storage in
+    complex distributed computation]". _Information Sciences_. *208*: 39-54.
+    doi:10.1016/j.ins.2012.04.016.
+
+- [[[Schreiber2000]]] Schreiber, T. (2000)
+    "link:https://dx.doi.org/10.1103/PhysRevLett.85.461[Measuring information transfer]".
+    _Physical Review Letters_. *85* (2): 461-464. doi:10.1103/PhysRevLett.85.461.
+
+- [[[Shannon1948]]] Shannon, C.E. (July-October 1948)
+    "link:https://dx.doi.org/10.1002%2Fj.1538-7305.1948.tb01338.x[A Mathematical Theory of
+    Communication]". _Bell System Technology Journal_. *27* (3): 379-423.
+    doi:10.1002/j.1538-7305.1948.tb01448.x.
+
+- [[[Tononi2003]]] Tononi, G. and Sporns, O. (2003)
+    "link:https://dx.doi.org/101186/1471-2202-4-31[Measuring information integration]". _BMC
+    neuroscience_. *4* (1): 31. doi:101186/1471-2202-4-31.

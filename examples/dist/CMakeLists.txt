@@ -1,0 +1,8 @@
+add_executable(alloc alloc.c)
+add_executable(create create.c)
+add_executable(dump dump.c)
+add_executable(getset getset.c)
+add_executable(manual_entropy manual_entropy.c)
+add_executable(prob prob.c)
+add_executable(tick tick.c)
+add_executable(shannon_entropy shannon_entropy.c)

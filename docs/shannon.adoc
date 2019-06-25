@@ -1,0 +1,233 @@
+[[shannon-information-measures]]
+= Shannon Information Measures
+
+The `inform/shannon.h` header provides a collection of entropy and information measures on
+discrete probability distributions (link:index.html#inform_dist[`inform_dist`]). These
+functions provide the core of *Inform* as all of the time series analysis functions are
+build upon them.
+
+[horizontal]
+Entropy::
+    <<inform_shannon_si,inform_shannon_si>>,
+    <<inform_shannon_entropy,inform_shannon_entropy>>
+Mutual Information::
+    <<inform_shannon_pmi,inform_shannon_pmi>>,
+    <<inform_shannon_mi,inform_shannon_mi>>,
+    <<inform_shannon_multi_pmi,inform_shannon_multi_pmi>>,
+    <<inform_shannon_multi_mi,inform_shannon_multi_mi>>
+Conditional Entropy::
+    <<inform_shannon_pce,inform_shannon_pce>>,
+    <<inform_shannon_ce,inform_shannon_ce>>
+Conditional Mutual Information::
+    <<inform_shannon_pcmi,inform_shannon_pcmi>>,
+    <<inform_shannon_cmi,inform_shannon_cmi>>
+Relative Entropy::
+    <<inform_shannon_pre,inform_shannon_pre>>,
+    <<inform_shannon_re,inform_shannon_re>>
+Cross Entropy::
+    <<inform_shannon_cross,inform_shannon_cross>>
+
+****
+[[inform_shannon_si]]
+[source,c]
+----
+double inform_shannon_si(inform_dist const *dist, size_t event,
+        double base);
+----
+Compute the Shannon self-information of an event given some distribution
+
+See <<Shannon1948>> for more details.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_entropy]]
+[source,c]
+----
+double inform_shannon_entropy(inform_dist const *dist, double base);
+----
+Compute the Shannon information of a distribution.
+
+This function will return `NaN` if the distribution is not valid, i.e.
+`!inform_dist_is_valid(dist)`.
+
+See <<Shannon1948>> for more details.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_pmi]]
+[source,c]
+----
+double inform_shannon_pmi(inform_dist const *joint,
+        inform_dist const *marginal_x, inform_dist const *marginal_y,
+        size_t event_joint, size_t event_x, size_t event_y,
+        double base);
+----
+Compute the point-wise mutual information of an combination of events
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_mi]]
+[source,c]
+----
+double inform_shannon_mi(inform_dist const *joint,
+        inform_dist const *marginal_x, inform_dist const *marginal_y,
+        double base);
+----
+Compute the Shannon-based mutual information of a distribution and two marginals.
+
+This function will return `NaN` if `inform_shannon` returns `NaN` when applied to any of the
+distribution arguments.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_pce]]
+[source,c]
+----
+double inform_shannon_pce(inform_dist const *joint,
+        inform_dist const *marginal, size_t event_joint,
+        size_t event_marginal, double base);
+----
+Compute the point-wise conditional entropy of a combination of events
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_ce]]
+[source,c]
+----
+double inform_shannon_ce(inform_dist const* joint,
+        inform_dist const *marginal, double base);
+----
+Compute the Shannon-based conditional entropy of a joint distribution and a marginal.
+
+This function will return `NaN` if `inform_shannon` returns `NaN` when applied to any of the
+distribution arguments.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_pcmi]]
+[source,c]
+----
+double inform_shannon_pcmi(inform_dist const *joint,
+        inform_dist const *marginal_xz, inform_dist const *marginal_yz,
+        inform_dist const *marginal_z, size_t event_joint,
+        size_t event_marginal_xz, size_t event_marginal_yz,
+        size_t event_marginal_z, double base);
+----
+Compute the point-wise conditional mutual information of a combination of events
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_cmi]]
+[source,c]
+----
+double inform_shannon_cmi(inform_dist const *joint,
+        inform_dist const *marginal_xz, inform_dist const *marginal_yz,
+        inform_dist const *marginal_z, double base);
+----
+Compute the conditional mutual entropy of a joint distribution, and the xz-, yz-, and
+z-marginals.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_pre]]
+[source,c]
+----
+double inform_shannon_pre(inform_dist const *p, inform_dist const *q,
+        size_t event, double base);
+----
+Compute the point-wise relative entropy between two distributions with equal support size at
+some event.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_re]]
+[source,c]
+----
+double inform_shannon_re(inform_dist const *p, inform_dist const *q,
+        double base);
+----
+Compute the relative entropy between two distributions with equal support size.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_cross]]
+[source,c]
+----
+double inform_shannon_cross(inform_dist const *p, inform_dist const *q,
+        double base);
+----
+Compute the cross entropy between two distributions with equal support size.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_shannon_multi_pmi]]
+[source,c]
+----
+double inform_shannon_multi_pmi(inform_dist const *joint,
+        inform_dist const **marginals, size_t n, size_t joint_event,
+        size_t const *marginal_events, double base);
+----
+Compute the multivariate point-wise mutual information between a collection of distributions.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****
+
+****
+[[inform_]]
+[source,c]
+----
+double inform_shannon_multi_mi(inform_dist const *joint,
+        inform_dist const **marginals, size_t n, double base);
+----
+Compute the multivariate mutual information between a collection of distributions.
+
+[horizontal]
+Header::
+    `inform/shannon.h`
+****

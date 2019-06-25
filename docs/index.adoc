@@ -1,0 +1,43 @@
+= Inform: A C library for information analysis of complex systems
+Douglas G. Moore <douglas.g.moore@asu.edu>
+v1.0.0, March 2018
+:toc2:
+:toclevels: 2
+:source-highlighter: prettify
+:stem: latexmath
+
+image:https://travis-ci.org/ELIFE-ASU/Inform.svg?branch=master[Build Status (Travis CI),
+link=https://travis-ci.org/ELIFE-ASU/Inform]
+image:https://ci.appveyor.com/api/projects/status/7y015h6p7n0q7097/branch/master?svg=true[Build
+Status (Appveyor), link=https://ci.appveyor.com/project/dglmoore/inform-vx977]
+
+Inform is a cross-platform C library designed for performing information analysis of complex
+system.
+
+1. The `inform_dist` struct provides discrete, emperical probability distributions. These
+form the basis for all of the information-theoretic measures.
+
+2. A collection of information measures built upon the distribution struct provide the core
+algorithms for the library, and are provided through the `shannon.h` header.
+
+3. A host of measures of the information dynamics on time series are built upon the core
+information measures. Each measure is housed in its own header, e.g.  `active_info.h`.
+
+In addition to the core components, a small collection of utilities are also
+provided.
+
+:leveloffset: 1
+
+include::getting-started.adoc[]
+
+include::error-handling.adoc[]
+
+include::timeseries.adoc[]
+
+include::utilities.adoc[]
+
+include::distributions.adoc[]
+
+include::shannon.adoc[]
+
+include::references.adoc[]

@@ -1,0 +1,1603 @@
+[[time-series-measures]]
+= Time Series Measures
+
+The original purpose of *Inform* was to analyze time series data. This explains why most of
+*Inform*'s functionality resides in functions specifically optimized for analyzing time
+series. The API was designed to be easy to use in C or {cpp}, or to be wrapped in a
+higher-level language, e.g. https://elife-asu.github.io/PyInform[Python]. This means that we
+avoided some of the "niceties" of C, such as extensive use of macros and other generic
+atrocities, in favor of wrappability. Keep this in mind as you learn the API.
+
+Many information measures have "local" variants which compute a time series of point-wise
+values. These local variants have names similar to their averaged or global counterparts,
+e.g <<inform_active_info,inform_active_info>> and
+<<inform_local_active_info,inform_local_active_info>>. We have been meticulous in ensuring
+that function and parameter names are consistent across measures. If you notice some
+inconsistency, please https://github.com/elife-asu/inform/issue[report it as an issue].
+
+[[time-series-notation]]
+== Notation
+
+Throughout the discussion of time series measures, we will try to use a consistent notation.
+We will denote random variables as stem:[X,Y,\ldots], and let stem:[x_i,y_i,\ldots]
+represent the stem:[i]-th time step of a time series drawn from the associated random
+variable. Many of the measures consider stem:[k]-histories (a.k.a stem:[k]-blocks) of the
+time series, e.g. stem:[x_i^{(k)} = \left\{x_{i-k+1}, x_{i-k+2},\ldots,x_i\right\}].
+
+When denoting probability distributions, we will only make the random variable explicit in
+situations where the notation is ambiguous. We will typically write stem:[p(x_i)],
+stem:[p(x_i^{(k)})], and stem:[p(x_i^{(k)}, x_{i+1})] to denote the empirical probability
+of observing the stem:[x_i] state, the stem:[x_i^{(k)}] stem:[k]-history, and the joint
+probability of observing stem:[\left(x_i^{(k)}, x_{i+1}\right)].
+
+*Please report any notational ambiguities as an
+https://github.com/elife-asu/inform/issue[issue].*
+
+[[time-series-detail]]
+== Implementation Details
+
+=== The Base: States and Logarithms
+The word "base" has two different meanings in the context of information measures on time
+series. It could refer to the base of the time series itself, that is the number of unique
+states in the time series. For example, the time series stem:[\{0,2,1,0,0\}] is a base-3
+time series. On the other hand, it could refer to the base of the logarithm used in
+computing the information content of the inferred probability distributions. The problem is
+that these two meanings clash. The base of the time series affects the range of values the
+measure can produce, and the base of the logarithm represents a rescaling of those values.
+
+In this library we deal with this by *always* using base-2 logarithms, and having the user
+specify the base of the time series — don't worry, we <<error-handling, set an error>> if
+the provided base doesn't make sense. All of this ensures that the library is a simple as
+reasonably possible.
+
+=== Multiple Initial Conditions
+You generally need *a lot* of data to infer a probability distribution.  An experimentalist
+or simulator might then collect data over multiple trials or initial conditions. Most of
+*Inform*'s time series measures allow the user to pass in a two-dimensional, rectangular
+array which each row representing a time series from a different initial condition. From
+this the probability distributions are inferred, and the desired value is calculated. This
+has the downside of requiring that the user store all of the data in memory, but it has the
+advantage of being fast and simple. Trade-offs, man...
+
+A subsequent release, https://github.com/elife-asu/inform/milestone/3[likely v1.1.0], will
+allows the initial conditions to have time series of different lengths and will provide
+accumulator implementations of all of these measures that will let the incrementally
+construct the distributions. This will lift some of the memory burden at the expense of
+runtime performance.
+
+=== Calling Conventions
+All of the of the time series functions described in this section use the same basic calling
+conventions and use the same (or similar) argument names were possible.
+
+|===
+| Argument Name | Description
+
+| `series`
+| A 2-D or 3-D, finite-state time series in contiguous, row-major form
+
+| `l`
+| The number of "sources" or variables in a 3-D time series
+
+| `n`
+| The number of initial conditions per "source"
+
+| `m`
+| The number of time steps per "source"
+
+| `b`
+| The base of the time series
+
+| `k`
+| The length history length
+
+| `err`
+| An error argument
+|===
+
+Average measures generally return a double-precision, floating-point value while local
+variants return a pointer to an appropriately shaped, contiguous array. Local measures
+accept an argument, often named after the function (e.g. local active information takes an
+`ai` argument), which is used to store the computed local values. If that argument is NULL,
+then the function allocates an array.
+
+We will try to note any deviations from these conventions.
+
+[[active-info]]
+== Active Information
+
+Active information (AI) was introduced in <<Lizier2012>> to quantify information storage in
+distributed computations. Active information is defined in terms of a temporally local
+variant
+
+[stem]
+++++
+a_{X,i}(k) = \log_2{\frac{p(x_i^{(k)}, x_{i+1})}{p(x_i^{(k)})p(x_{i+1})}}.
+++++
+
+where the probabilities are constructed empirically from the _entire_ time series. From the
+local variant, the temporally global active information is defined as
+
+[stem]
+++++
+A_X(k) = \langle a_{X,i}(k) \rangle_i
+       = \sum_{x_i^{(k)},x_{i+1}} p(x_i^{(k)},x_{i+1}) \log_2{\frac{p(x_i^{(k)}, x_{i+1})}{p(x_i^{(k)})p(x_{i+1})}}.
+++++
+
+Strictly speaking, the local and average active information are defined as
+
+[stem]
+++++
+a_{X,i} = \lim_{k\rightarrow \infty}a_{X,i}(k)
+\qquad \textrm{and} \qquad
+A_X = \lim_{k\rightarrow \infty}A_X(k),
+++++
+
+but we do not provide limiting functionality in this library
+(https://github.com/elife-asu/issues/24[yet]!).
+
+****
+[[inform_active_info]]
+[source,c]
+----
+double inform_active_info(int const *series, size_t n, size_t m,
+        int b, size_t k, inform_error *err);
+----
+Compute the average active information with a history length `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,1,1,0,0,0};
+double ai = inform_active_info(series, 1, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// ai ~ 0.305958
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {0,0,1,1,1,1,0,0,0,
+                        1,0,0,1,0,0,1,0,0};
+double ai = inform_active_info(series, 2, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// ai ~ 0.359879
+----
+[horizontal]
+Header:: `inform/active_info.h`
+****
+
+****
+[[inform_local_active_info]]
+[source,c]
+----
+double *inform_local_active_info(int const *series, size_t n, size_t m,
+        int b, size_t k, double *ai, inform_error *err);
+----
+Compute the local active information with a history length `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,1,1,0,0,0};
+double *ai = inform_local_active_info(series, 1, 9, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// ai ~ {-0.193, 0.807, 0.222, 0.222, -0.363, 1.222, 0.222}
+free(ai);
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {0,0,1,1,1,1,0,0,0,
+                        1,0,0,1,0,0,1,0,0};
+double ai[14];
+inform_local_active_info(series, 2, 9, 2, 2, ai, &err);
+assert(inform_succeeded(&err));
+// ai ~ { 0.807, -0.363, 0.637, 0.637, -0.778, 0.807, -1.193,
+//        0.807,  0.807, 0.222, 0.807,  0.807, 0.222,  0.807 }
+
+// no need to free since `ai` was statically allocated in this scope
+// free(ai);
+----
+[horizontal]
+Header:: `inform/active_info.h`
+****
+
+[[block-entropy]]
+== Block Entropy
+Block entropy, also known as stem:[N]-gram entropy <<Shannon1948>>, is the standard Shannon
+entropy of the stem:[k]-histories of a time series:
+[stem]
+++++
+H(X^{(k)}) = -\sum_{x_i^{(k)}} p(x_i^{(k)}) \log_2{p(x_i^{(k)})}
+++++
+which reduces to the traditional Shannon entropy for stem:[k=1].
+
+****
+[[inform_block_entropy]]
+[source,c]
+----
+double inform_block_entropy(int const *series, size_t n, size_t m,
+        int b, size_t k, inform_error *err);
+----
+Compute the average block entropy of a time series with block size `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,1,1,0,0,0};
+
+// k = 1
+double h = inform_block_entropy(series, 1, 9, 2, 1, &err);
+assert(inform_succeeded(&err));
+// h ~ 0.991076
+
+// k = 2
+h = inform_block_entropy(series, 1, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// h ~ 1.811278
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {0,0,1,1,1,1,0,0,0,
+                        1,0,0,1,0,0,1,0,0};
+double h = inform_active_info(series, 2, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// h ~ 1.936278
+----
+[horizontal]
+Header:: `inform/block_entropy.h`
+****
+
+****
+[[inform_local_block_entropy]]
+[source,c]
+----
+double *inform_local_block_entropy(int const *series, size_t n,
+        size_t m, int b, size_t k, double *ent, inform_error *err);
+----
+Compute the local block entropy of a time series with block size `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,1,1,0,0,0};
+
+// k == 1
+double *h = inform_local_block_entropy(series, 1, 9, 2, 1, NULL, &err);
+assert(inform_succeeded(&err));
+// h ~ { 0.848, 0.848, 1.170, 1.170, 1.170, 1.170, 0.848, 0.848, 0.848 }
+
+// k == 2
+double *h = inform_local_block_entropy(series, 1, 9, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// h ~ { 1.415, 3.000, 1.415, 1.415, 1.415, 3.000, 1.415, 1.415 }
+
+free(ai);
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {0,0,1,1,1,1,0,0,0,
+                        1,0,0,1,0,0,1,0,0};
+double h[16];
+inform_local_block_entropy(series, 2, 9, 2, 2, h, &err);
+assert(inform_succeeded(&err));
+// h ~ { 1.415, 2.415, 2.415, 2.415, 2.415, 2.000, 1.415, 1.415,
+//       2.000, 1.415, 2.415, 2.000, 1.415, 2.415, 2.000, 1.415 }
+
+// no need to free since `h` was statically allocated in this scope
+// free(h);
+----
+[horizontal]
+Header:: `inform/block_entropy.h`
+****
+
+[[conditional-entropy]]
+== Conditional Entropy
+https://en.wikipedia.org/wiki/Conditional_entropy[Conditional entropy] is a measure of the
+amount of information required to describe a random variable stem:[Y] given knowledge of
+another random variable stem:[X]. When applied to time series, two time series are used to
+construct the empirical distributions, and <<inform_shannon_ce,inform_shannon_ce>> can be
+applied to yield
+[stem]
+++++
+H(Y|X) = - \sum_{x_i,y_i} p(x_i,y_i) \log_2{p(y_i|x_i)}.
+++++
+This can be viewed as the time-average of the local conditional entropy
+[stem]
+++++
+h_i(Y|X) = -\log_2{p(y_i|x_i)}.
+++++
+See <<Cover1991>> for more information.
+
+****
+[[inform_conditional_entropy]]
+[source,c]
+----
+double inform_conditional_entropy(int const *xs, int const *ys,
+        size_t n, int bx, int by, inform_error *err);
+----
+Compute the conditional entropy between two time series.
+
+This function expects the *condition* to be the first argument, `xs`. It is expected that
+each time series be the same length `n`, but may have different bases `bx` and `by`.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1};
+int const ys[20] = {0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1};
+
+double ce = inform_conditional_entropy(xs, ys, 20, 2, 2, &err);
+assert(inform_succeeded(&err));
+// ce == 0.597107
+
+ce = inform_conditional_entropy(ys, xs, 20, 2, 2, &err);
+assert(inform_succeeded(&err));
+// ce == 0.507757
+----
+[horizontal]
+Header:: `inform/conditional_entropy.h`
+****
+
+****
+[[inform_local_conditional_entropy]]
+[source,c]
+----
+double *inform_local_conditional_entropy(int const *xs, int const *ys,
+        size_t n, int bx, int by, double *mi, inform_error *err);
+----
+Compute the local conditional entropy between two time series.
+
+This function expects the *condition* to be the first argument, `xs`. It is expected that
+each time series be the same length `n`, but may have different bases `bx` and `by`.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1};
+int const ys[20] = {0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1};
+
+double *ce = inform_local_conditional_entropy(xs, ys, 20, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// ce == { 3.00, 3.00, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19,
+//         0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.42, 0.42, 0.42, 2.00 }
+
+inform_local_conditional_entropy(ys, xs, 20, 2, 2, ce, &err);
+assert(inform_succeeded(&err));
+// ce == { 1.32, 1.32, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10,
+//         0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.74, 0.74, 0.74, 3.91 }
+
+free(ce);
+----
+[horizontal]
+Header:: `inform/conditional_entropy.h`
+****
+
+[[cross-entropy]]
+== Cross Entropy
+https://en.wikipedia.org/wiki/Cross_entropy[Cross entropy] between two distributions
+stem:[p_X] and stem:[q_X] measures the amount of information needed to identify events
+using a coding scheme optimized for stem:[q_X] when stem:[p_X] is the "real" distributions
+over stem:[X].
+[stem]
+++++
+H(p,q) = -\sum_{x} p(x) \log_2{q(x)}
+++++
+Cross entropy's local variant is equivalent to the self-information of stem:[q_X], and as
+such is implemented by <<inform_local_block_entropy,inform_local_block_entropy>>.
+
+See <<Cover1991>> for more details.
+****
+[[inform_cross_entropy]]
+[source,c]
+----
+double inform_cross_entropy(int const *ps, int const *qs, size_t n,
+        int b, inform_error *err);
+----
+Compute the cross entropy between the "true" and "unnatural" distributions stem:[p_X] and
+stem:[q_X] from associated time series `ps` and `qs`, respectively.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const ps[10] = {0,1,1,0,1,0,0,1,0,0};
+int const qs[10] = {0,0,0,0,0,1,1,0,0,1};
+
+double ce = inform_cross_entropy(ps, qs, 10, 2, &err);
+assert(inform_succeeded(&err));
+// ce == 1.003530
+
+ce = inform_cross_entropy(qs, ps, 10, 2, &err);
+assert(inform_succeeded(&err));
+// ce == 0.912454
+----
+[horizontal]
+Header:: `inform/cross_entropy.h`
+****
+
+[[effective-information]]
+== Effective Information
+
+Effective information is a _causal_ measure aimed at teasing out the causal structure of a
+dynamical system. In essence, it is the mutual information between an "intervention"
+distribution — a probability distribution over initial states — and the distribution after
+one time step:
+[stem]
+++++
+EI(A,p) = I(p,p^TA)
+++++
+where stem:[A] is the transition probability matrix. Functionality to construct a transition
+probability matrix from time series is provided by the <<inform_tpm>> function.
+
+See <<Tononi2003>>, <<Hoel2013>> or <<Hoel2017>> for more information.
+****
+[[inform_effective_info]]
+[source,c]
+----
+double inform_effective_info(double const *tpm, double const *inter,
+        size_t n, inform_error *err);
+----
+Compute the effective information from an `n`stem:[\times]`n` transition probability matrix
+`tpm` given an intervention distribution `inter`.
+
+If `inter` is `NULL`, then the uniform distribution over the `n` states is used.
+
+*Examples:*
+
+Uniform intervention distribution:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+double const tpm[4] = {0.50,0.50,
+                       0.25,0,75};
+double ei = inform_effective_info(tmp, NULL, 2, &err);
+assert(inform_succeeded(&err));
+// ei == 0.048795
+----
+
+Non-uniform intervention distribution:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+double const tpm[4] = {0.50,0.50,
+                       0.25,0,75};
+double const inter[2] = {0.488372, 0.511628};
+double ei = inform_effective_info(tmp, inter, 2, &err);
+assert(inform_succeeded(&err));
+// ei == 0.048821
+----
+
+[horizontal]
+Header:: `inform/effective_info.h`
+****
+
+[[entropy-rate]]
+== Entropy Rate
+https://en.wikipedia.org/wiki/Entropy_rate[Entropy rate] quantifies the amount of
+information needed to describe the next state of stem:[X] given observations of
+stem:[X^{(k)}].  In other wrods, it is the entropy of the time series conditioned on the
+stem:[k]-histories.  The local entropy rate
+[stem]
+++++
+h_{X,i}(k) = \log_2{\frac{p(x_i^{(k)}, x_{i+1})}{p(x_i^{(k)})}}.
+++++
+can be averaged to obtain the global entropy rate
+[stem]
+++++
+H_X(k) = \langle h_{X,i}(k) \rangle_i
+       = \sum_{x_i^{(k)},x_{i+1}} p(x_i^{(k)},x_{i+1}) \log_2{\frac{p(x_i^{(k)}, x_{i+1})}{p(x_i^{(k)})}}.
+++++
+Much as with <<active-info, active information>>, the local and average entropy rates are
+formally obtained in the limit
+[stem]
+++++
+h_{X,i} = \lim_{k\rightarrow \infty}h_{X,i}(k)
+\qquad \textrm{and} \qquad
+H_X = \lim_{k\rightarrow \infty}H_X(k),
+++++
+
+but we do not provide limiting functionality in this library
+(https://github.com/elife-asu/issues/24[yet]!).
+
+See <<Cover1991>> for more details.
+
+****
+[[inform_entropy_rate]]
+[source,c]
+----
+double inform_entropy_rate(int const *series, size_t n, size_t m,
+        int b, size_t k, inform_error *err);
+----
+Compute the average entropy rate with a history length `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,1,1,0,0,0};
+double er = inform_entropy_rate(series, 1, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// er ~ 0.679270
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {0,0,1,1,1,1,0,0,0,
+                        1,0,0,1,0,0,1,0,0};
+double er = inform_entropy_rate(series, 2, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// er ~ 0.625349
+----
+[horizontal]
+Header:: `inform/entropy_rate.h`
+****
+
+****
+[[inform_local_entropy_rate]]
+[source,c]
+----
+double *inform_local_entropy_rate(int const *series, size_t n,
+        size_t m, int b, size_t k, double *er, inform_error *err);
+----
+Compute the local entropy rate with a history length `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,1,1,0,0,0};
+double *er = inform_local_entropy_rate(series, 1, 9, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// er ~ { 1.000, 0.000, 0.585, 0.585, 1.585, 0.000, 1.000 }
+free(er);
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {0,0,1,1,1,1,0,0,0,
+                        1,0,0,1,0,0,1,0,0};
+double er[14];
+inform_local_entropy_rate(series, 2, 9, 2, 2, er, &err);
+assert(inform_succeeded(&err));
+// er ~ { 0.415, 1.585, 0.585, 0.585, 1.585, 0.000, 2.000,
+//        0.000, 0.415, 0.585, 0.000, 0.415, 0.585, 0.000 }
+
+// no need to free since `er` was statically allocated in this scope
+// free(er);
+----
+[horizontal]
+Header:: `inform/entropy_rate.h`
+****
+
+[[excess-entropy]]
+== Excess Entropy
+Formally, the excess entropy is the mutual information between two adjacent, semi-infinite
+blocks of variables:
+[stem]
+++++
+E_X = \lim_{k \rightarrow \infty}I[(x_{-k},\ldots,x_{-1}),(x_0,\ldots,x_{k-1})].
+++++
+Of course, we cannot take the limit in practice, so we implement the finite form:
+[stem]
+++++
+E_X(k) = I[(x_{-k},\ldots,x_1),(x_0,\ldots,x_{k-1})].
+++++
+
+We can think of excess entropy as a slight generalization of <<active-info,active
+information>> or a special case of <<predictive-info,predictive information>>.
+
+See <<Crutchfield2003>> and <<Feldman2003>> for more details.
+****
+[[inform_excess_entropy]]
+[source,c]
+----
+double inform_excess_entropy(int const *series, size_t n, size_t m,
+        int b, size_t k, inform_error *err);
+----
+Compute the excess entropy from a time series with block size `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,0,0,1,1,0};
+double ee = inform_excess_entropy(series, 1, 9, 2, 2, &err);
+assert(!err);
+// ee ~ 1.918296
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {
+    0,0,1,1,0,0,1,1,0,
+    0,1,0,1,0,1,0,1,0
+};
+double ee = inform_excess_entropy(series, 2, 9, 2, 2, &err);
+assert(!err);
+// ee ~ 1.109170
+----
+
+[horizontal]
+Header:: `inform/excess_entropy.h`
+****
+
+****
+[[inform_local_excess_entropy]]
+[source,c]
+----
+double *inform_local_excess_entropy(int const *series, size_t n,
+        size_t m, int b, size_t k, double *ee, inform_error *err);
+----
+Compute the local excess entropy from a time series with block size `k`.
+
+*Examples:*
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,0,0,1,1,0};
+double *ee = inform_local_excess_entropy(series, 1, 9, 2, 2, NULL, &err);
+assert(!err);
+// ee ~ { 1.585 1.585 2.585 2.585 1.585 1.585 }
+free(ee);
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {
+    0,0,1,1,0,0,1,1,0,
+    0,1,0,1,0,1,0,1,0
+};
+double *ee = inform_local_excess_entropy(series, 2, 9, 2, 2, NULL, &err);
+assert(!err);
+// ee ~ { 2.585 -0.059 3.585 -0.415 2.585 -0.059 
+//        0.848  0.848 0.848  0.848 0.848  0.848 }
+free(ee);
+----
+
+[horizontal]
+Header:: `inform/excess_entropy.h`
+****
+
+[[information-flow]]
+== Information Flow
+Information flow (IF) was introduced by Ay and Polani as a measure of the "strength of a
+causal effect" (<<Ay2008>>). Unlike many of the other measures in *Inform*, information flow
+was designed around interventions: rather than allowing dynamics to progress naturally, some
+subset of the random variables are forced into a particular state. If no interventions are
+performed, then IF reduces to
+https://en.wikipedia.org/wiki/Conditional_mutual_information[conditional mutual
+information].
+
+Practially, there is no way for *Inform* to know from time series whether or not any
+interventions have actually been performed upon the system. As such, the onous is on the
+user to determine whether this function is in-fact computing Ay and Polani's information
+flow.
+
+In accordance with <<Ay2008>>, information flow is defined as
+
+[stem]
+++++
+I_p(X \rightarrow Y | Z) = \sum_{x,y,z} p(z)p(x|\hat{z})p(y|\hat{x},\hat{z})
+    \log{
+        \frac{p(y|\hat{x},\hat{z})}
+        {\sum_{x^\prime} p(x^\prime|\hat{z})p(y|\hat{x}^\prime,\hat{z})}
+    }
+++++
+
+All probabilities are estimated from sequences of observations — the order of those
+sequences is irrelevant. A https://github.com/elife-asu/inform/issues/76[subsequent version]
+will allow the user to specify intervention distributions.
+
+****
+[[inform_information_flow]]
+[source,c]
+----
+double inform_information_flow(int const *src, int const *dst,
+        int const *back, size_t l_src, size_t l_dst, size_t l_back,
+        size_t n, size_t m, int b, inform_error *err);
+----
+
+*Examples:*
+This example demonstrates how to user `inform_information_flow` to analyzed Ay and Polani's
+diamond structure example (<<Ay2008>> p.28-29). In this example, we have four interacting
+Boolean variables stem:[W], stem:[X], stem:[Y] and stem:[Z]. The variables stem:[X] and
+stem:[Y] are each dependent on stem:[W]: they simply copy it's state. The stem:[Z] variable
+is the XOR of the states of stem:[X] and stem:[Y]. The variable stem:[W] is uniformly
+distributed.
+
+_Example 1_: Natural dynamics
+
+Left to it's own devices, this system might produce a sequence of observations like:
+[source,c]
+----
+int const ws[8] = {0,0,1,0,1,1,0,1};
+int const xs[8] = {0,0,1,0,1,1,0,1};
+int const ys[8] = {0,0,1,0,1,1,0,1};
+int const zs[8] = {0,0,0,0,0,0,0,0};
+----
+From these we can compute the following information flows:
+[stem]
+++++
+I_p(X \rightarrow Y) = 1 \\
+I_p(X \rightarrow Y | W) = 0 \\
+I_p(W \rightarrow Z | Y) = 0.
+++++
+Our notation departs somewhat from that of <<Ay2008>> as we denote these as information
+flows despite the fact that we are not strictly intervening upon the system. If the user
+prefers, they can think of this as "intervening on the system that is indistiguishable from
+the natural dynamics". In any case, we can use `inform_information_flow` to compute the the
+above values
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+double flow = 0.0;
+flow = inform_information_flow(xs, ys, NULL, 1, 1, 0, 1, 8, 2, &err);
+assert(!err);
+// flow ~ 1.0
+flow = inform_information_flow(xs, ys, ws, 1, 1, 1, 1, 8, 2, &err);
+assert(!err);
+// flow ~ 0.0
+flow = inform_information_flow(ws, zs, ys, 1, 1, 1, 1, 8, 2, &err);
+assert(!err);
+// flow ~ 0.0
+----
+
+_Example 2_: Interventions
+
+Now, consider that we can intervene on stem:[Y] and force it to whichever state we so
+choose. Then we might end up with a sequence of observations as
+[source,c]
+----
+int const ws[8] = {0,0,1,0,1,1,0,1};
+int const xs[8] = {0,0,1,0,1,1,0,1};
+int const ys[8] = {1,0,1,0,0,1,1,0};
+int const zs[8] = {1,0,0,0,1,0,1,1};
+----
+From these we can compute the following information flows:
+[stem]
+++++
+I_p(X \rightarrow Y) = 0 \\
+I_p(X \rightarrow Y | W) = 0 \\
+I_p(W \rightarrow Z | Y) = 1.
+++++
+
+In *Inform* this looks like:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+double flow = 0.0;
+flow = inform_information_flow(xs, ys, NULL, 1, 1, 0, 1, 8, 2, &err);
+assert(!err);
+// flow ~ 0.0
+flow = inform_information_flow(xs, ys, ws, 1, 1, 1, 1, 8, 2, &err);
+assert(!err);
+// flow ~ 0.0
+flow = inform_information_flow(ws, zs, ys, 1, 1, 1, 1, 8, 2, &err);
+assert(!err);
+// flow ~ 1.0
+----
+
+[horizontal]
+Header:: `inform/information_flow.h`
+****
+
+[[evidence-of-integration]]
+== Evidence Of Integration
+Evidence of Integration (EoI) was introduced in <<Biehl2016>> as a means of identifying
+representations of agents in dynamical systems. Given a collection of random variables,
+stem:[\mathcal{X}=\{X_1,X_2,\ldots,X_l\}], we can form (non-trivial) partitionings of
+stem:[\mathcal{X}]:
+
+[stem]
+++++
+\{\mathcal{Z} \subset \mathcal{P}(\mathcal{X})\setminus\{\mathcal{X},\varnothing\}\ |\
+    \mathcal{Z} \not= \varnothing,
+    \bigcup_{Z \in \mathcal{Z}} Z = \mathcal{X} ~\textrm{and}~ Z_i \cap Z_j = \varnothing,
+    i \not = j
+\}
+++++
+Each partitioning stem:[\mathcal{Z} = \{Z_1, \ldots, Z_m\}] consists of a collection of
+joint random variables built from stem:[\mathcal{X}]. The configurations of
+stem:[\mathcal{Z}] are in one-to-one correspondence with the configurations of
+stem:[\mathcal{X}]. Given such a partitioning, we can ask what the pointwise mutual
+information is:
+[stem]
+++++
+mi_\mathcal{Z}(z_1, \ldots, z_m) = \log{\frac{p(z_1, \ldots, z_m)}{p(z_1) \ldots p(z_m)}}.
+++++
+If stem:[z=\{z_1,\ldots,z_m\}] corresponds to the configuration
+stem:[x=\{x_1,\ldots,x_l\}], we refer to the above mutual information as the "evidence of
+integration of stem:[x] with respect to the partitioning stem:[\mathcal{Z}]".
+
+We say that a configuration stem:[x] is _integrated_ if and only if the evidence of
+integration of stem:[x] is positive for all partitionings of the system.
+
+****
+[[inform_integration_evidence]]
+[source,c]
+----
+double *inform_integration_evidence(int const *series, size_t l,
+        size_t n, int const *b, double *evidence, inform_error *err);
+----
+Given a sequence of `n` observed states of `l` random variables (`series`), compute the
+evidence of integration for each partitioning of the `l` variables, and return the minimum
+and maximum evidence for each observation.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[30] = {
+    0, 1, 0, 1, 1, 1, 0, 0, 1, 0,
+    0, 1, 0, 1, 1, 1, 0, 0, 1, 0,
+    1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+};
+double *evidence = inform_integration_evidence(series, 3, 10, (int[3]){2,2,2}, NULL, &err);
+assert(!err);
+// evidence ~ { -0.322 0.263 -0.322 0.263 0.263 -0.322 0.263 0.263 -0.322 0.263   // MIN
+//               1.000 1.263  1.000 1.263 1.263  1.000 1.263 1.263  1.000 1.263 } // MAX
+// integrated?   NO    YES    NO    YES   YES    NO    YES   YES    NO    YES
+free(evidence);
+----
+
+[horizontal]
+Header:: `inform/integration.h`
+****
+
+****
+[[inform_integration_evidence_part]]
+[source,c]
+----
+double *inform_integration_evidence_part(int const *series, size_t l,
+        size_t n, int const *b, size_t const *parts, size_t nparts,
+        double *evidence, inform_error *err);
+----
+Given a sequence of `n` observed states of `l` random variables (`series`), compute the
+evidence of integration each observation with respect to a partitioning `parts`.
+
+This function is useful when the number of variables `l` is large; the user can test a small
+subset of the partitionings to increase confidence that the system is integrated. Biehl et.
+al. suggest considering only the finest partitioning, stem:[\mathcal{Z} = \{\{X_1\}, \ldots
+\{X_l\}\}].
+
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[30] = {
+    0, 1, 0, 1, 1, 1, 0, 0, 1, 0, // X_1
+    0, 1, 0, 1, 1, 1, 0, 0, 1, 0, // X_2
+    1, 1, 1, 1, 1, 0, 0, 0, 0, 0, // X_3
+};
+size_t partitions[3] = {0,0,1}; // Partition as {{X_1, X_2}, {X_3}} (2 partitions)
+double *evidence = inform_integration_evidence_part(series, 3, 10,
+    (int[3]){2,2,2}, partitions, 2, NULL, &err);
+assert(!err);
+// evidence ~ { -0.322 0.263 -0.322 0.263 0.263 -0.322 0.263 0.263 -0.322 0.263 }
+free(evidence);
+----
+[horizontal]
+Header:: `inform/integration.h`
+****
+
+[[mutual-information]]
+== Mutual Information
+https://en.wikipedia.org/wiki/Mutual_information[Mutual information] (MI) is a measure of
+the amount of mutual dependence between at least two random variables. Locally, MI is
+defined as
+[stem]
+++++
+i_i(X_1,\ldots,X_l) = \frac{p(x_{1,i},\ldots,x_{l,i})}{p(x_{1,i})\ldots p(x_{l,i})}.
+++++
+The mutual information is then just the time average of stem:[i_i(X_1,\ldots,X_l)]:
+[stem]
+++++
+I(X_1,\ldots,X_l) =
+    \sum_{x_{1,i},\ldots,x_{l,i}} p(x_{1,i},\ldots,x_{l,i})
+    \frac{p(x_{1,i},\ldots,x_{l,i})}{p(x_{1,i})\ldots p(x_{l,i})}.
+++++
+See <<Cover1991>> for more details.
+
+****
+[[inform_mutual_info]]
+[source,c]
+----
+double inform_mutual_info(int const *series, size_t l, size_t n,
+        int const *b, inform_error *err);
+----
+Compute the mutual information between two or more time series.
+
+For this function, `l` is the number of random variables, and `n` is the length of each
+variable's time series. Each variable can have a different base, so `b` is an array of
+length `l`.
+
+*Examples:*
+
+Two variables:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[40] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1, // var 1
+                    0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1  // var 2};
+
+double mi = inform_mutual_info(xs, 2, 20, (int[2]){2,2}, &err);
+assert(inform_succeeded(&err));
+// mi == 0.214171
+----
+
+Three variables:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[60] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1, // var 1
+                    0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1, // var 2
+                    1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1, // var 3};
+
+double mi = inform_mutual_info(xs, 3, 20, (int[3]){2,2,2}, &err);
+assert(inform_succeeded(&err));
+// mi == 1.095462
+----
+[horizontal]
+Header:: `inform/mutual_info.h`
+****
+
+****
+[[inform_local_mutual_info]]
+[source,c]
+----
+double *inform_local_mutual_info(int const *series, size_t l, size_t n,
+        int const *b, double *mi, inform_error *err);
+----
+Compute the local mutual information between two or more time series.
+
+For this function, `l` is the number of random variables, and `n` is the length of each
+variable's time series. Each variable can have a different base, so `b` is an array of
+length `l`.
+
+*Examples:*
+
+Two variables:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[40] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1, // var 1
+                    0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1  // var 2};
+
+double *mi = inform_local_mutual_info(xs, 2, 20, (int[2]){2,2}, NULL, &err);
+assert(inform_succeeded(&err));
+// mi ~ { -1.000, -1.000, 0.222,  0.222, 0.222, 0.222, 0.222, 0.222,
+//         0.222,  0.222, 0.222,  0.222, 0.222, 0.222, 0.222, 0.222,
+//         1.585,  1.585, 1.585, -1.585 }
+free(mi);
+----
+
+Three variables:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[60] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1, // var 1
+                    0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1, // var 2
+                    1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1, // var 3};
+
+
+double *mi = inform_local_mutual_info(xs, 3, 20, (int[3]){2,2,2}, NULL, &err);
+assert(inform_succeeded(&err));
+// mi ~ { 0.737, 0.737, 0.737, 0.737, 0.737, 0.737, 0.737, 0.737,
+//        0.737, 0.737, 0.737, 0.737, 0.737, 0.737, 0.737, 0.737,
+//        3.322, 3.322, 0.322, 0.152 }
+free(mi);
+----
+[horizontal]
+Header:: `inform/mutual_info.h`
+****
+
+[[partial-information-decomposition]]
+== Partial Information Decomposition
+
+****
+[[inform_pid_source]]
+[source,c]
+----
+typedef struct inform_pid_source
+{
+    size_t *name;
+    struct inform_pid_source **above;
+    struct inform_pid_source **below;
+    size_t size, n_above, n_below;
+    double imin;
+    double pi;
+} inform_pid_source;
+----
+[horizontal]
+Header:: `inform/pid.h`
+****
+
+****
+[[inform_pid_lattice]]
+[source,c]
+----
+typedef struct inform_pid_lattice
+{
+    inform_pid_source **sources;
+    inform_pid_source *top;
+    inform_pid_source *bottom;
+    size_t size;
+} inform_pid_lattice;
+----
+[horizontal]
+Header:: `inform/pid.h`
+****
+
+****
+[[inform_pid_lattice_free]]
+[source,c]
+----
+void inform_pid_lattice_free(inform_pid_lattice *l);
+----
+[horizontal]
+Header:: `inform/pid.h`
+****
+
+****
+[[inform_pid]]
+[source,c]
+----
+inform_pid_lattice *inform_pid(int const *stimulus,
+        int const *responses, size_t l, size_t n, int bs,
+        int const *br, inform_error *err);
+----
+[horizontal]
+Header:: `inform/pid.h`
+****
+
+[[predictive-information]]
+== Predictive Information
+Formally, the predictive information is the mutual information between a finite-history and
+a semi-infinite future:
+[stem]
+++++
+P_X(k) = \lim_{l \rightarrow \infty}I[(x_{-k},\ldots,x_{-1}),(x_0,\ldots,x_{l-1})].
+++++
+Of course, we cannot take the limit in practice, so we implement the finite form:
+[stem]
+++++
+P_X(k,l) = I[(x_{-k},\ldots,x_1),(x_0,\ldots,x_{k-1})].
+++++
+
+We can think of <<active-info, active information>> and <<excess-entropy, excess entropy>>
+as a special cases of predictive information.
+
+See <<Bialek2001a>> and <<Bialek2001b>> for more details.
+
+****
+[[inform_predictive_info]]
+[source,c]
+----
+double inform_predictive_info(int const *series, size_t n, size_t m,
+        int b, size_t kpast, size_t kfuture, inform_error *err);
+----
+Compute the predictive information from a time series with history length `kpast` and
+"future length" `kfuture`.
+
+*Examples:*
+Our examples will compute the predictive information between a the current time step and
+then next two time steps, stem:[P_X(1,2)].
+
+One initial condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,0,0,1,1,0};
+double pi = inform_predictive_info(series, 1, 9, 2, 1, 2, &err);
+assert(!err);
+// pi ~ 0.985228
+----
+
+Two initial conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {
+    0,0,1,1,0,0,1,1,0,
+    0,1,0,1,0,1,0,1,0
+};
+double pi = inform_predictive_info(series, 2, 9, 2, 1, 2, &err);
+assert(!err);
+// pi ~ 0.244905
+----
+
+[horizontal]
+Header:: `inform/predictive_info.h`
+****
+
+****
+[[inform_local_predictive_info]]
+[source,c]
+----
+double *inform_local_predictive_info(int const *series, size_t n,
+        size_t m, int b, size_t kpast, size_t kfuture, double *pi,
+        inform_error *err);
+----
+Compute the local predictive information from a time series with history length `kpast` and
+"future length" `kfuture`.
+
+*Examples:*
+Our examples will compute the local predictive information between a the current time step
+and then next two time steps.
+
+One inital condition:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[9] = {0,0,1,1,0,0,1,1,0};
+double *pi = inform_local_predictive_info(series, 1, 9, 2, 1, 2, NULL, &err);
+assert(!err);
+// pi ~ { 0.807 0.807 1.222 1.222 0.807 0.807 1.222 }
+free(pi);
+----
+
+Two inital conditions:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const series[18] = {
+    0,0,1,1,0,0,1,1,0,
+    0,1,0,1,0,1,0,1,0
+};
+double *pi = inform_local_predictive_info(series, 2, 9, 2, 1, 2, NULL, &err);
+assert(!err);
+// pi ~ { -0.515 0.807 -0.363 1.222 -0.515 0.807 -0.363 
+//         0.222 0.485  0.222 0.485  0.222 0.485  0.222 }
+free(pi);
+----
+
+[horizontal]
+Header:: `inform/predictive_info.h`
+****
+
+[[relative-entropy]]
+== Relative Entropy
+https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence[Relative entropy], also
+known as the Kullback-Leibler divergence, measures the amount of information gained in
+switching from a prior distribution stem:[q_X] to a posterior distribution stem:[p_X] over
+_the same support_:
+[stem]
+++++
+D_{KL}(p||q) = \sum_{x_i} p(x_i) \log_2{\frac{p(x_i)}{q(x_i)}}.
+++++
+The local counterpart is
+[stem]
+++++
+d_{KL,i}(p||q) = log_2{\frac{p(x_i)}{q(x_i)}}.
+++++
+Note that the average in moving from the local to the non-local relative entropy is taken
+over the posterior distribution.
+
+See <<Kullback1951>> and <<Cover1991>> for more information.
+
+****
+[[inform_relative_entropy]]
+[source,c]
+----
+double inform_relative_entropy(int const *xs, int const *ys, size_t n,
+        int b, inform_error *err);
+----
+Compute the relative entropy between time series drawn from posterior and prior
+distributions, here `xs` and `ys` respectively.
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[10] = {0,1,0,0,0,0,0,0,0,1};
+int const ys[10] = {0,1,1,1,1,0,0,1,0,0};
+
+double re = inform_relative_entropy(xs, ys, 10, 2, &err);
+assert(inform_succeeded(&err));
+// re == 0.278072
+
+re = inform_relative_entropy(ys, xs, 10, 2, &err);
+assert(inform_succeeded(&err));
+// re == 0.321928
+----
+[horizontal]
+Header:: `inform/relative_entropy.h`
+****
+
+****
+[[inform_local_relative_entropy]]
+[source,c]
+----
+double *inform_local_relative_entropy(int const *xs, int const *ys,
+        size_t n, int b, double *re, inform_error *err);
+----
+
+*Examples:*
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[10] = {0,1,0,0,0,0,0,0,0,1};
+int const ys[10] = {0,1,1,1,1,0,0,1,0,0};
+
+double *re = inform_local_relative_entropy(xs, ys, 10, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// re ~ { 0.678, -1.322, 0.678, 0.678, 0.678, 0.678, 0.678,
+//        0.678, 0.678, -1.322 };
+
+inform_local_relative_entropy(ys, xs, 10, 2, re, &err);
+assert(inform_succeeded(&err));
+// re ~ { -0.678, 1.322, 1.322, 1.322, 1.322, -0.678, -0.678, 1.322,
+//        -0.678, -0.678 }
+
+free(re);
+----
+[horizontal]
+Header:: `inform/relative_entropy.h`
+****
+
+[[separable-information]]
+== Separable Information
+
+Separable information (SI) was introduced in <<Lizier2010>> as a method for detecting
+information modification in distributed computations. Given a random variable stem:[Y]
+and a collection of potentially informative sources stem:[V_Y] (wherein stem:[Y \not\in
+V_Y]), separable information quantifies the total information gained about stem:[Y] from
+seperate observations of histories of stem:[Y] and "transfer contributions" from each of the
+sources stem:[X \in V_Y]. In other words, it is the sum of the <<active-info>> of
+stem:[Y] and the (apparent) <<transfer-entropy>> from each source to stem:[Y]:
+
+[stem]
+++++
+s_{Y,i}(k) = a_{Y,i}(k) + \sum_{X \in V_Y} t_{X \rightarrow Y, i}(k),\\
+S_Y(k) = \langle s_{Y,i}(k) \rangle_i = A_Y(k) + \sum_{X \in V_Y} T_{X \rightarrow Y}(k).
+++++
+
+****
+[[inform_separable_info]]
+[source,c]
+----
+double inform_separable_info(int const *srcs, int const *dest,
+        size_t l, size_t n, size_t m, int b, size_t k,
+        inform_error *err);
+----
+
+*Examples:*
+One initial condition, one source:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const dest[9] = {0,1,1,1,1,0,0,0,0};
+int const srcs[9] = {0,0,1,1,1,1,0,0,0};
+
+double si = inform_separable_info(srcs, dest, 1, 1, 9, 2, 2, &err);
+assert(!err);
+// si ~ 0.591673
+----
+
+One initial condition, multiple sources:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const dest[9] = {0,1,1,1,1,0,0,0,0};
+int const srcs[18] = {
+    0,0,1,1,1,1,0,0,0,
+    1,1,1,1,0,0,0,0,0,
+};
+
+double si = inform_separable_info(srcs, dest, 2, 1, 9, 2, 2, &err);
+assert(!err);
+// si ~ 0.985228
+----
+
+Multiple initial conditions, multiple sources:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const dest[18] = {
+    0,1,1,1,1,0,0,0,0,
+    1,1,0,1,1,0,1,1,0
+};
+int const srcs[36] = {
+    0,0,1,1,1,1,0,0,0, 1,1,1,1,1,0,1,1,0,
+    1,1,1,1,0,0,0,0,0, 0,0,0,0,1,1,1,1,0,
+};
+
+double si = inform_separable_info(srcs, dest, 2, 2, 9, 2, 2, &err);
+assert(!err);
+// si ~ 0.625349
+----
+
+[horizontal]
+Header:: `inform/separable_info.h`
+****
+
+****
+[[inform_local_separable_info]]
+[source,c]
+----
+double *inform_local_separable_info(int const *srcs, int const *dest,
+        size_t l, size_t n, size_t m, int b, size_t k, double *si,
+        inform_error *err);
+----
+
+*Examples:*
+One initial condition, one source:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const dest[9] = {0,1,1,1,1,0,0,0,0};
+int const srcs[9] = {0,0,1,1,1,1,0,0,0};
+
+double *si = inform_local_separable_info(srcs, dest, 1, 1, 9, 2, 2, NULL, &err);
+assert(!err);
+// si ~ { 1.222 0.637 0.637 -0.778 0.807 0.807 0.807 }
+free(si);
+----
+
+One initial condition, multiple sources:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const dest[9] = {0,1,1,1,1,0,0,0,0};
+int const srcs[18] = {
+    0,0,1,1,1,1,0,0,0,
+    1,1,1,1,0,0,0,0,0,
+};
+
+double *si = inform_local_separable_info(srcs, dest, 2, 1, 9, 2, 2, NULL, &err);
+assert(!err);
+// si ~ { 1.222 1.222 1.222 0.807 0.807 0.807 0.807 }
+free(si);
+----
+
+Multiple initial conditions, multiple sources:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const dest[18] = {
+    0,1,1,1,1,0,0,0,0,
+    1,1,0,1,1,0,1,1,0
+};
+int const srcs[36] = {
+    0,0,1,1,1,1,0,0,0, 1,1,1,1,1,0,1,1,0,
+    1,1,1,1,0,0,0,0,0, 0,0,0,0,1,1,1,1,0,
+};
+
+double *si = inform_local_separable_info(srcs, dest, 2, 2, 9, 2, 2, NULL, &err);
+assert(!err);
+// si ~ { 1.000 -0.000 -0.000  1.000 0.585 1.000  1.000 
+//        1.000 -0.415  1.000 -0.000 1.585 1.000 -0.000 }
+free(si);
+----
+
+[horizontal]
+Header:: `inform/separable_info.h`
+****
+
+[[transfer-entropy]]
+== Transfer Entropy
+
+Transer entropy (TE) was introduced in <<Schreiber2000>> to quantify information transfer
+between an information source and destination, conditioning out shared history effects. TE
+was originally formulated considering only the source and destination; however many systems
+of interest have more just those two components. As such, it may be further necessary to
+condition the probabilities on the states of all "background" components in the system.
+These two forms are sometimes referred to as _apparent_ and _complete_ transfer entropy,
+respectively (<<Lizier2008>>).
+
+Our implementation of TE allows the user to condition the probabilities on any number of
+background processes, within hardware limits. For the subsequent description, take stem:[X]
+to be the source, stem:[Y] the target, and stem:[\mathcal{W} = \left\{W_1, \ldots,
+W_l\right\}] be the background processes against which we'd like to condition. For example,
+we might take the state of two nodes in a dynamical network as the source and target, while
+all other nodes in the network are treated as the background. Transfer entropy is then
+defined in terms of a time-local variant
+
+[stem]
+++++
+t_{X \rightarrow Y, \mathcal{W}, i}(k) =
+    \log_2{\frac{p(y_{i+1},x_i|y^{(k)}_i,W_i)}
+    {p(y_{i+1}|y^{(k)}_i,W_i)p(x_{i+1}|y^{(k)}_i,W_i)}}
+++++
+
+where stem:[W_i = w_{1,i},\ldots,w_{l,i}] are the states of each of the background nodes at
+time step stem:[i], and the probabilities are constructed empirically from the _entire_ time
+series. From the local variant, the temporally global transfer entropy is defined as
+
+[stem]
+++++
+T_{X \rightarrow Y, \mathcal{W}}(k)
+    = \langle t_{X \rightarrow Y, \mathcal{W}, i}(k) \rangle_i
+    = \sum_{y_{i+1},y^{(k)},x_i,W_i} p(y_{i+1},y^{(k)}_i,x_i,W_i)
+    \log_2{\frac{p(y_{i+1},x_i|y^{(k)}_i,W_i)}
+    {p(y_{i+1}|y^{(k)}_i,W_i)p(x_{i+1}|y^{(k)}_i,W_i)}}.
+++++
+
+Strictly speaking, the local and average transfer entropy are defined as
+
+[stem]
+++++
+t_{X \rightarrow Y, \mathcal{W}, i}
+    = \lim_{k\rightarrow \infty} t_{X \rightarrow Y, \mathcal{W}, i}(k)
+\qquad \textrm{and} \qquad
+T_{X \rightarrow Y, \mathcal{W}}
+    = \lim_{k\rightarrow \infty} t_{X \rightarrow Y, \mathcal{W}}(k),
+++++
+
+but we do not provide limiting functionality in this library
+(https://github.com/elife-asu/issues/24[yet]!).
+
+****
+[[inform_transfer_entropy]]
+[source,c]
+----
+double inform_transfer_entropy(int const *src, int const *dst,
+        int const *back, size_t l, size_t n, size_t m, int b, size_t k,
+        inform_error *err);
+----
+Compute the average transfer entropy with a history length `k`.
+
+*Examples:*
+
+One initial condition, no background:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[9] = {0,1,1,1,1,0,0,0,0};
+int const ys[9] = {0,0,1,1,1,1,0,0,0};
+double te = inform_transfer_entropy(xs, ys, NULL, 0, 1, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// te ~ 0.679270
+----
+
+Two initial conditions, no background:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[18] = {1,0,0,0,0,1,1,1,1,
+                    1,1,1,1,0,0,0,1,1};
+int const ys[18] = {0,0,1,1,1,1,0,0,0,
+                    1,0,0,0,0,1,1,1,0};
+double te = inform_transfer_entropy(xs, ys, NULL, 0, 2, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// te ~ 0.693536
+----
+
+One initial condition, one background process:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[9] = {0,1,1,1,1,0,0,0,0};
+int const ys[9] = {0,0,1,1,1,1,0,0,0};
+int const ws[9] = {0,1,1,1,1,0,1,1,1};
+double te = inform_transfer_entropy(xs, ys, ws, 1, 1, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// te ~ 0.285714
+----
+
+One initial condition, two background processes:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[9]  = {0,1,1,1,1,0,0,0,0};
+int const ys[9]  = {0,0,1,1,1,1,0,0,0};
+int const ws[18] = {1,0,1,0,1,1,1,1,1,
+                    1,1,0,1,0,1,1,1,1};
+double te = inform_transfer_entropy(xs, ys, ws, 2, 1, 9, 2, 2, &err);
+assert(inform_succeeded(&err));
+// te ~ 0.0
+----
+This example is interesting in that the two background process provide the same information
+about the target as the source process does, but they don't separately.
+
+[horizontal]
+Header:: `inform/transfer_entropy.h`
+****
+
+****
+[[inform_local_transfer_entropy]]
+[source,c]
+----
+double *inform_local_transfer_entropy(int const *src, int const *dst,
+        int const *back, size_t l, size_t n, size_t m, int b, size_t k,
+        double *te, inform_error *err);
+----
+Compute the local transfer entropy with a history length `k`.
+
+*Examples:*
+
+One initial condition, no background:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[9] = {0,1,1,1,1,0,0,0,0};
+int const ys[9] = {0,0,1,1,1,1,0,0,0};
+double *lte = inform_local_transfer_entropy(xs, ys, NULL, 0, 1, 9, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// lte ~ {  1.000  0.000  0.585  0.585  1.585  0.000  1.000 }
+free(lte);
+----
+
+Two initial conditions, no background:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[18] = {1,0,0,0,0,1,1,1,1,
+                    1,1,1,1,0,0,0,1,1};
+int const ys[18] = {0,0,1,1,1,1,0,0,0,
+                    1,0,0,0,0,1,1,1,0};
+double *lte = inform_local_transfer_entropy(xs, ys, NULL, 0, 2, 9, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// lte ~ {  1.322  0.000  0.737  0.737  1.322  0.000  0.737
+//          0.000  0.737  0.737  1.322  0.000  0.737  1.322 }
+free(lte);
+----
+
+One initial condition, one background process:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[9] = {0,1,1,1,1,0,0,0,0};
+int const ys[9] = {0,0,1,1,1,1,0,0,0};
+int const ws[9] = {0,1,1,1,1,0,1,1,1};
+double *lte = inform_local_transfer_entropy(xs, ys, ws, 1, 1, 9, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// lte ~ {  1.000  0.000  0.000  0.000  0.000  0.000  1.000 }
+free(lte);
+----
+
+One initial condition, two background processes:
+[source,c]
+----
+inform_error err = INFORM_SUCCESS;
+int const xs[9]  = {0,1,1,1,1,0,0,0,0};
+int const ys[9]  = {0,0,1,1,1,1,0,0,0};
+int const ws[18] = {1,0,1,0,1,1,1,1,1,
+                    1,1,0,1,0,1,1,1,1};
+double *lte = inform_local_transfer_entropy(xs, ys, ws, 2, 1, 9, 2, 2, NULL, &err);
+assert(inform_succeeded(&err));
+// lte ~ {  0.000  0.000  0.000  0.000  0.000  0.000  0.000 }
+free(lte);
+----
+[horizontal]
+Header:: `inform/transfer_entropy.h`
+****
