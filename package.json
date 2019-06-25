@@ -1,5 +1,5 @@
 {
-  "name": "inform",
+  "name": "informjs",
   "version": "0.0.0",
   "description": "A wrapper for the Inform information analysis library",
   "main": "lib/index.js",
