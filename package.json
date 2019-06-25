@@ -1,0 +1,48 @@
+{
+  "name": "inform",
+  "version": "0.0.0",
+  "description": "A wrapper for the Inform information analysis library",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "fmt": "prettier --write \"src/**/*.ts\" \"src/**/*.js\" \"test/**/*.ts\" \"test/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "pretest": "npm run build",
+    "test": "jest --detectOpenHandles --config jestconfig.json",
+    "predocs": "npm run build",
+    "docs": "typedoc src",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elife-asu/informjs.git"
+  },
+  "keywords": [
+    "information",
+    "science",
+    "math"
+  ],
+  "author": "Douglas G. Moore <doug@dglmoore.com> (https://dglmoore.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/elife-asu/informjs/issues"
+  },
+  "homepage": "https://github.com/elife-asu/informjs#readme",
+  "files": [
+    "lib/**/*",
+    "!test/",
+    "!docs/",
+    "!coverage/"
+  ],
+  "devDependencies": {
+    "@types/jest": "^24.0.15",
+    "jest": "^24.8.0",
+    "prettier": "^1.18.2",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.18.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typedoc": "^0.14.2",
+    "typescript": "^3.5.2"
+  }
+}
