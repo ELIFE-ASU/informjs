@@ -23,7 +23,7 @@
   "exclude": ["node_modules", "test"],
   "typedocOptions": {
     "out": "docs",
-    "mode": "modules",
+    "mode": "file",
     "target": "ES2019",
     "module": "commonjs",
     "includes": "src",
@@ -31,7 +31,7 @@
     "excludePrivate": true,
     "excludeNotExported": true,
     "stripInternal": true,
-    "theme": "minimal",
+    "theme": "typedoc-theme",
     "downlevelIteration": true
   }
 }
