@@ -12,7 +12,7 @@ export interface RNG {
     /**
      * Return a random number in the range $[0,1)$.
      */
-	double(): number;
+    double(): number;
 }
 
 /**
@@ -21,11 +21,11 @@ export interface RNG {
 export interface Sig {
     /**
      * A two-sided p-value
-	 */
+     */
     p: number;
-	/**
+    /**
      * The standard error for the p-value
-	 */
+     */
     se: number;
 }
 
@@ -33,13 +33,13 @@ export interface Sig {
  * A computed value with statistical significance.
  */
 export interface SigValue {
-	/**
-	 * The computed value
-	 */
+    /**
+     * The computed value
+     */
     value: number;
-	/**
+    /**
      * The statistical significance of that value
-	 */
+     */
     sig: Sig;
 }
 
@@ -49,9 +49,9 @@ export interface SigValue {
  * shuffle](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm).
  */
 function shuffleInPlace(series: Int32Array, rng?: RNG): Int32Array {
-	if (rng === undefined) {
-		rng = seedrandom();
-	}
+    if (rng === undefined) {
+        rng = seedrandom();
+    }
 
     let currentIndex = series.length;
     let temporaryValue;
@@ -91,7 +91,7 @@ export function mutualInfo(xs: Series, ys: Series, nperm: number, rng?: RNG): Si
         count += Number(Core.mutualInfo(as, shuffleInPlace(bs, rng)) >= mi);
     }
     const p = count / (nperm + 1);
-    const se = Math.sqrt(p*(1-p) / nperm);
+    const se = Math.sqrt((p * (1 - p)) / nperm);
     return { value: mi, sig: { p, se } };
 }
 /**
@@ -119,6 +119,6 @@ export function transferEntropy(source: Series, target: Series, k: number, nperm
         count += Number(Core.transferEntropy(shuffleInPlace(ss, rng), ts, k) >= te);
     }
     const p = count / (nperm + 1);
-    const se = Math.sqrt(p*(1-p) / nperm);
+    const se = Math.sqrt((p * (1 - p)) / nperm);
     return { value: te, sig: { p, se } };
 }
