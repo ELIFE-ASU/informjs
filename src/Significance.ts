@@ -3,6 +3,12 @@ import * as Core from './Core';
 import { Series } from './Core';
 
 /**
+ * An RNG to use by default. This global allows us to avoid recreating
+ * the RNG every time an RNG is needed, but not provided.
+ */
+const localRNG = seedrandom();
+
+/**
  * The required interface for a random number generator (RNG).
  *
  * Note that [seedrandom's](https://npmjs.org/package/seedrandom) `prng`
@@ -50,7 +56,7 @@ export interface SigValue {
  */
 function shuffleInPlace(series: Int32Array, rng?: RNG): Int32Array {
     if (rng === undefined) {
-        rng = seedrandom();
+        rng = localRNG;
     }
 
     let currentIndex = series.length;
