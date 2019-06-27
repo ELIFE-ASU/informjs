@@ -1,6 +1,6 @@
+import * as seedrandom from 'seedrandom';
 import * as Core from './Core';
 import { Series } from './Core';
-import * as seedrandom from 'seedrandom';
 
 /**
  * The required interface for a random number generator (RNG).
