@@ -59,7 +59,7 @@ export function mutualInfo(xs: Series, ys: Series): number {
  *
  * @param source  observations of the source variable
  * @param target  observations of the target variable
- * @param k       the history length ($k \geq 1)
+ * @param k       the history length ($k \geq 1$)
  * @returns       the transfer entropy between the variables
  *
  * # Examples:

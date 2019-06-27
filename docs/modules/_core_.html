@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>informjs | informjs</title>
+	<title>&quot;Core&quot; | informjs</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<script type="text/x-mathjax-config">
@@ -888,7 +888,7 @@ img { max-width: 100%; }
 		<div class="container">
 			<div class="table-wrap">
 				<div class="table-cell">
-					<strong><a href="index.html">informjs</a></strong>
+					<strong><a href="../index.html">informjs</a></strong>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -918,37 +918,180 @@ img { max-width: 100%; }
 </header>
 <nav class="tsd-navigation secondary">
 	<ul>
+		<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+			<a href="_core_.html#series" class="tsd-kind-icon">Series</a>
+		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module">
+			<a href="_core_.html#mutualinfo" class="tsd-kind-icon">mutual<wbr>Info</a>
+		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module">
+			<a href="_core_.html#transferentropy" class="tsd-kind-icon">transfer<wbr>Entropy</a>
+		</li>
 	</ul>
 </nav>
 <div class="container container-main">
 	<div class="content-wrap">
-		<div class="tsd-panel tsd-typography">
-			<h1 id="informjs">informjs</h1>
-			<table>
-				<thead>
-					<tr>
-						<th align="center"><strong>Build Status</strong></th>
-					</tr>
-				</thead>
-				<tbody><tr>
-						<td align="center"><a href="https://travis-ci.com/elife-asu/informjs"><img src="https://travis-ci.com/elife-asu/informjs.svg?branch=master" alt=""></a> <a href="https://ci.appveyor.com/project/dglmoore/informjs"><img src="https://ci.appveyor.com/api/projects/status/n8jqnpax18188r9d/branch/master?svg=true" alt=""></a> <a href="https://codecov.io/gh/elife-asu/informjs"><img src="https://codecov.io/gh/elife-asu/informjs/branch/master/graph/badge.svg" alt=""></a></td>
-					</tr>
-			</tbody></table>
-			<p>A node.js wrapper for the <a href="https://elife-asu.github.io/Inform">Inform</a> information analysis library.</p>
-		</div>
 		<section class="tsd-panel-group tsd-index-group">
 			<h2>Index</h2>
 			<section class="tsd-panel tsd-index-panel">
 				<div class="tsd-index-content">
 					<section class="tsd-index-section ">
-						<h3>External modules</h3>
+						<h3>Type aliases</h3>
 						<ul class="tsd-index-list">
-							<li class="tsd-kind-external-module"><a href="modules/_core_.html" class="tsd-kind-icon">"<wbr>Core"</a></li>
-							<li class="tsd-kind-external-module"><a href="modules/_significance_.html" class="tsd-kind-icon">"<wbr>Significance"</a></li>
-							<li class="tsd-kind-external-module"><a href="modules/_index_.html" class="tsd-kind-icon">"index"</a></li>
+							<li class="tsd-kind-type-alias tsd-parent-kind-external-module"><a href="_core_.html#series" class="tsd-kind-icon">Series</a></li>
+						</ul>
+					</section>
+					<section class="tsd-index-section ">
+						<h3>Functions</h3>
+						<ul class="tsd-index-list">
+							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core_.html#mutualinfo" class="tsd-kind-icon">mutual<wbr>Info</a></li>
+							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core_.html#transferentropy" class="tsd-kind-icon">transfer<wbr>Entropy</a></li>
 						</ul>
 					</section>
 				</div>
+			</section>
+		</section>
+		<section class="tsd-panel-group tsd-member-group ">
+			<h2>Type aliases</h2>
+			<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-external-module">
+				<a name="series" class="tsd-anchor"></a>
+				<h3>Series</h3>
+				<div class="tsd-signature tsd-kind-icon">Series<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Int32Array</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ArrayBuffer</span></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/ae53fd9/src/Core.ts#L8">Core.ts:8</a></li>
+					</ul>
+				</aside>
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The current implementation only supports 1-dimension time series of
+							integer values. This is represented with the <code>Series</code> type. If the
+						contents of a <code>Series</code> variable is invalid, a <code>TypeError</code> is raised.</p>
+					</div>
+				</div>
+			</section>
+		</section>
+		<section class="tsd-panel-group tsd-member-group ">
+			<h2>Functions</h2>
+			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module">
+				<a name="mutualinfo" class="tsd-anchor"></a>
+				<h3>mutual<wbr>Info</h3>
+				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
+					<li class="tsd-signature tsd-kind-icon">mutual<wbr>Info<span class="tsd-signature-symbol">(</span>xs<span class="tsd-signature-symbol">: </span><a href="_core_.html#series" class="tsd-signature-type">Series</a>, ys<span class="tsd-signature-symbol">: </span><a href="_core_.html#series" class="tsd-signature-type">Series</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/ae53fd9/src/Core.ts#L43">Core.ts:43</a></li>
+							</ul>
+						</aside>
+						<div class="tsd-comment tsd-typography">
+							<div class="lead">
+								<p><a href="https://en.wikipedia.org/wiki/Mutual_information">Mutual information</a>
+									(MI) is a measure of mutual dependence between at least
+									two random variables, though only the bivariate form is
+									currently implemented in <strong>informjs</strong>. There are a number of
+									different definitions of mutual information for more than two
+									variables. <a href="https://elife-asu.github.io/Inform">Inform</a> implements
+								it as</p>
+							</div>
+							<p>$$
+								I(X_1, \ldots, X_l) = \sum_{x_{1,i}, \ldots, x_{l,i}} p(x_{1,i}, \ldots, x_{l,i})
+								\frac{p(x_{1,i}, \ldots, x_{l,i})}{p(x_{1,i}) \ldots p(x_{l,i})}
+							$$</p>
+							<p>See [Cover1991] for more details.</p>
+						</div>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>xs: <a href="_core_.html#series" class="tsd-signature-type">Series</a></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>observations of first variable</p>
+								</div>
+							</li>
+							<li>
+								<h5>ys: <a href="_core_.html#series" class="tsd-signature-type">Series</a></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>observations of second variable</p>
+								</div>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						<p>the mutual information between the variables</p>
+						<h1 id="examples">Examples</h1>
+						<pre><code class="language-javascript">&gt; xs = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>];
+&gt; ys = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>];
+&gt; mutualInfo(xs, ys)
+<span class="hljs-number">0.21417094500762912</span></code></pre>
+						<h1 id="references">References</h1>
+						<p>[Cover1991] Cover, T.M. and Thomas, J.A. (1991) &quot;Elements of information theory&quot;. New York: Wiley. ISBN
+						0-471-06259-6.</p>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module">
+				<a name="transferentropy" class="tsd-anchor"></a>
+				<h3>transfer<wbr>Entropy</h3>
+				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
+					<li class="tsd-signature tsd-kind-icon">transfer<wbr>Entropy<span class="tsd-signature-symbol">(</span>source<span class="tsd-signature-symbol">: </span><a href="_core_.html#series" class="tsd-signature-type">Series</a>, target<span class="tsd-signature-symbol">: </span><a href="_core_.html#series" class="tsd-signature-type">Series</a>, k<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/ae53fd9/src/Core.ts#L79">Core.ts:79</a></li>
+							</ul>
+						</aside>
+						<div class="tsd-comment tsd-typography">
+							<div class="lead">
+								<p>Transfer entropy (TE) was introduced by <a href="">Schreiber2000</a> to quantify
+									information transfer between an information source and target,
+									conditioning out shared history effects. This implementation allows the
+									user to provide source $X$ and target $Y$ time series and a history
+									length $k$. The transfer entropy is then essentially the conditional
+									mutual information between $X$ and $Y$, conditioned on the length-$k$
+									history of $Y$:
+									$$
+									T_{X \rightarrow Y}(k) = \sum_{y_{i+1}, y^{(k)}, x_i} p(y_{i+1}, y^{(k)}, x_i)
+									\log_2{\frac{p(y_{i+1}, x_i ~|~ y^{(k)})}{p(y_{i+1} ~|~ y^{(k)})p(x_i ~|~ y^{(k)})}}
+								$$</p>
+							</div>
+						</div>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>source: <a href="_core_.html#series" class="tsd-signature-type">Series</a></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>observations of the source variable</p>
+								</div>
+							</li>
+							<li>
+								<h5>target: <a href="_core_.html#series" class="tsd-signature-type">Series</a></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>observations of the target variable</p>
+								</div>
+							</li>
+							<li>
+								<h5>k: <span class="tsd-signature-type">number</span></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>the history length ($k \geq 1$)</p>
+								</div>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						<p>the transfer entropy between the variables</p>
+						<h1 id="examples-">Examples:</h1>
+						<pre><code class="language-javascript">&gt; xs = [<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>]
+&gt; ys = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>]
+&gt; transferEntropy(xs, ys, <span class="hljs-number">2</span>)
+<span class="hljs-number">0.6792696431662097</span></code></pre>
+						<h1 id="references-">References:</h1>
+						<p>[Schreiber2000] Shreiber, T. (2000) &quot;<a href="https://dx.doi.org/10.1103/PhysRevLett.85.461">Measuring information
+							transfer</a>&quot;. <em>Physical Review Letters</em>. <strong>85</strong> (2):
+						461-464. doi:10.1103/PhysRevLett.85.461</p>
+					</li>
+				</ul>
 			</section>
 		</section>
 		<footer class="with-border-bottom">

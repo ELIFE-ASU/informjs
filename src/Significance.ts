@@ -74,8 +74,38 @@ function shuffleInPlace(series: Int32Array, rng?: RNG): Int32Array {
  * @param xs     observations of the first variable
  * @param ys     observations of the second variable
  * @param nperm  number of permutations
- * @param rng    an (optional) random number generator
+ * @param rng    a random number generator
  * @returns      the computed mutual information and estimated statistical significance
+ *
+ * @see [`informjs.mutualInfo`](_core_.html#mutualinfo)
+ *
+ * # Examples:
+ *
+ * ```typescript
+ * import { Significance } from 'inform';
+ * import * as seedrandom from 'seedrandom';
+ *
+ * const { mutualInfo } = Significance;
+ *
+ * const xs = [0,0,1,1,2,1,1,0,0];
+ * const ys = [0,0,0,1,1,1,0,0,0];
+ *
+ * mutualInfo(xs, ys, 100000); // Uses a default RNG, automatically seeded
+ * // value will always be the same, but sig will vary based on the seed.
+ * //
+ * // {
+ * //   value: 0.47385138961004514,
+ * //   sig: { p: 0.16682833171668282, se: 0.0011789683602765229 }
+ * // }
+ *
+ * mutualInfo(xs, ys, 100000, seedrandom('2019'));
+ * // Should deterministically yield:
+ * //
+ * // {
+ * //   value: 0.47385138961004514,
+ * //   sig: { p: 0.16682833171668282, se: 0.0011789683602765229 }
+ * // }
+ * ```
  */
 export function mutualInfo(xs: Series, ys: Series, nperm: number, rng?: RNG): SigValue {
     if (nperm < 10) {
@@ -101,10 +131,40 @@ export function mutualInfo(xs: Series, ys: Series, nperm: number, rng?: RNG): Si
  *
  * @param source  observations of the source variable
  * @param target  observations of the target variable
- * @param k       the history length ($k \geq 1)
+ * @param k       the history length ($k \geq 1$)
  * @param nperm   number of permutations
- * @param rng     an (optional) random number generator
+ * @param rng     a random number generator
  * @returns       the computed transfer entropy and estimated statistical significance
+ *
+ * @see [`informjs.transferEntropy`](_core_.html#transferentropy)
+ *
+ * # Examples:
+ *
+ * ```typescript
+ * import { Significance } from 'inform';
+ * import * as seedrandom from 'seedrandom';
+ *
+ * const { transferEntropy } = Significance;
+ *
+ * const xs = [0,0,1,1,2,1,1,0,0];
+ * const ys = [0,0,0,1,1,1,0,0,0];
+ *
+ * transferEntropy(xs, ys, 2, 100000); // Uses a default RNG, automatically seeded
+ * // value will always be the same, but sig will vary based on the seed.
+ * //
+ * // {
+ * //   value: 0.6792696431662097,
+ * //   sig: { p: 0.2824871751282487, se: 0.0014236859591086474 }
+ * // }
+ *
+ * transferEntropy(xs, ys, 2, 100000, seedrandom('2019'));
+ * // Should deterministically yield:
+ * //
+ * // {
+ * //   value: 0.6792696431662097,
+ * //   sig: { p: 0.27848721512784874, se: 0.0014175051539172055 }
+ * // }
+ * ```
  */
 export function transferEntropy(source: Series, target: Series, k: number, nperm: number, rng?: RNG): SigValue {
     if (nperm < 10) {
