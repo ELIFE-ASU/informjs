@@ -127,7 +127,7 @@ export function mutualInfo(xs: Series, ys: Series, nperm: number, rng?: RNG): Si
         count += Number(Core.mutualInfo(as, shuffleInPlace(bs, rng)) >= mi);
     }
     const p = count / (nperm + 1);
-    const se = Math.sqrt((p * (1 - p)) / nperm);
+    const se = Math.sqrt((p * (1 - p)) / (nperm + 1));
     return { value: mi, sig: { p, se } };
 }
 /**
@@ -185,6 +185,6 @@ export function transferEntropy(source: Series, target: Series, k: number, nperm
         count += Number(Core.transferEntropy(shuffleInPlace(ss, rng), ts, k) >= te);
     }
     const p = count / (nperm + 1);
-    const se = Math.sqrt((p * (1 - p)) / nperm);
+    const se = Math.sqrt((p * (1 - p)) / (nperm + 1));
     return { value: te, sig: { p, se } };
 }
