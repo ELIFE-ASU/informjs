@@ -959,7 +959,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">Series<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Int32Array</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ArrayBuffer</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/4e197b5/src/Core.ts#L8">Core.ts:8</a></li>
+						<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/6f32e8f/src/Core.ts#L8">Core.ts:8</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -983,7 +983,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/4e197b5/src/Core.ts#L43">Core.ts:43</a></li>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/6f32e8f/src/Core.ts#L43">Core.ts:43</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -1019,12 +1019,16 @@ img { max-width: 100%; }
 						</ul>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
 						<p>the mutual information between the variables</p>
-						<h1 id="examples">Examples</h1>
+						<a href="#examples" id="examples" style="color: inherit; text-decoration: none;">
+							<h1>Examples</h1>
+						</a>
 						<pre><code class="language-javascript">&gt; xs = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>];
 &gt; ys = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>];
 &gt; mutualInfo(xs, ys)
 <span class="hljs-number">0.21417094500762912</span></code></pre>
-						<h1 id="references">References</h1>
+						<a href="#references" id="references" style="color: inherit; text-decoration: none;">
+							<h1>References</h1>
+						</a>
 						<p>[Cover1991] Cover, T.M. and Thomas, J.A. (1991) &quot;Elements of information theory&quot;. New York: Wiley. ISBN
 						0-471-06259-6.</p>
 					</li>
@@ -1040,7 +1044,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/4e197b5/src/Core.ts#L79">Core.ts:79</a></li>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/6f32e8f/src/Core.ts#L79">Core.ts:79</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -1054,7 +1058,7 @@ img { max-width: 100%; }
 									history of $Y$:
 									$$
 									T_{X \rightarrow Y}(k) = \sum_{y_{i+1}, y^{(k)}, x_i} p(y_{i+1}, y^{(k)}, x_i)
-									\log_2{\frac{p(y_{i+1}, x_i ~|~ y^{(k)})}{p(y_{i+1} ~|~ y^{(k)})p(x_i ~|~ y^{(k)})}}
+									\log_2{\frac{p(y_{i+1}, x_i <del>|</del> y^{(k)})}{p(y_{i+1} <del>|</del> y^{(k)})p(x_i <del>|</del> y^{(k)})}}
 								$$</p>
 							</div>
 						</div>
@@ -1081,12 +1085,16 @@ img { max-width: 100%; }
 						</ul>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
 						<p>the transfer entropy between the variables</p>
-						<h1 id="examples-">Examples:</h1>
+						<a href="#examples" id="examples" style="color: inherit; text-decoration: none;">
+							<h1>Examples:</h1>
+						</a>
 						<pre><code class="language-javascript">&gt; xs = [<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>]
 &gt; ys = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>]
 &gt; transferEntropy(xs, ys, <span class="hljs-number">2</span>)
 <span class="hljs-number">0.6792696431662097</span></code></pre>
-						<h1 id="references-">References:</h1>
+						<a href="#references" id="references" style="color: inherit; text-decoration: none;">
+							<h1>References:</h1>
+						</a>
 						<p>[Schreiber2000] Shreiber, T. (2000) &quot;<a href="https://dx.doi.org/10.1103/PhysRevLett.85.461">Measuring information
 							transfer</a>&quot;. <em>Physical Review Letters</em>. <strong>85</strong> (2):
 						461-464. doi:10.1103/PhysRevLett.85.461</p>
