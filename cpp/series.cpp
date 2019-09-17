@@ -1,6 +1,7 @@
 #include "./series.h"
 
 #include <inform/mutual_info.h>
+#include <inform/active_info.h>
 #include <inform/transfer_entropy.h>
 
 using namespace v8;
@@ -42,6 +43,38 @@ auto inform::mutual_info(FunctionCallbackInfo<Value> const& args) -> void {
     }
 
     args.GetReturnValue().Set(Number::New(isolate, mi));
+}
+
+auto inform::active_info(FunctionCallbackInfo<Value> const& args) -> void {
+    auto isolate = args.GetIsolate();
+
+    if (args.Length() != 2) {
+        return inform::throws(isolate, Exception::TypeError, "two arguments are required");
+    }
+
+    auto const maybe_xs = inform::get_vector(isolate, args[0]);
+    if (maybe_xs.IsNothing()) {
+        return;
+    }
+
+    auto const maybe_k = inform::get_number<Integer, size_t>(args[1]);
+    if (maybe_k.IsNothing()) {
+        return throws(isolate, Exception::TypeError, "history length is not an unsigned integer");
+    }
+
+    auto const xs = maybe_xs.FromJust();
+    auto const k = maybe_k.FromJust();
+
+    auto const b = series_base(xs);
+
+    inform_error err = INFORM_SUCCESS;
+    auto ai = inform_active_info(xs.data(), 1, xs.size(), b, k, &err);
+
+    if (err) {
+        return throws(isolate, Exception::Error, inform_strerror(&err));
+    }
+
+    args.GetReturnValue().Set(Number::New(isolate, ai));
 }
 
 auto inform::transfer_entropy(FunctionCallbackInfo<Value> const& args) -> void {

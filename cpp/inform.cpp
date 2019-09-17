@@ -5,6 +5,7 @@ namespace inform {
 
     void init(Local<Object> exports) {
         NODE_SET_METHOD(exports, "mutualInfo", inform::mutual_info);
+        NODE_SET_METHOD(exports, "activeInfo", inform::active_info);
         NODE_SET_METHOD(exports, "transferEntropy", inform::transfer_entropy);
     }
 

@@ -922,6 +922,9 @@ img { max-width: 100%; }
 			<a href="_core_.html#series" class="tsd-kind-icon">Series</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
+			<a href="_core_.html#activeinfo" class="tsd-kind-icon">active<wbr>Info</a>
+		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module">
 			<a href="_core_.html#mutualinfo" class="tsd-kind-icon">mutual<wbr>Info</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
@@ -944,6 +947,7 @@ img { max-width: 100%; }
 					<section class="tsd-index-section ">
 						<h3>Functions</h3>
 						<ul class="tsd-index-list">
+							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core_.html#activeinfo" class="tsd-kind-icon">active<wbr>Info</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core_.html#mutualinfo" class="tsd-kind-icon">mutual<wbr>Info</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core_.html#transferentropy" class="tsd-kind-icon">transfer<wbr>Entropy</a></li>
 						</ul>
@@ -959,7 +963,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">Series<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Int32Array</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ArrayBuffer</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/6f32e8f/src/Core.ts#L8">Core.ts:8</a></li>
+						<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/5e40bd8/src/Core.ts#L8">Core.ts:8</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -974,6 +978,64 @@ img { max-width: 100%; }
 		<section class="tsd-panel-group tsd-member-group ">
 			<h2>Functions</h2>
 			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module">
+				<a name="activeinfo" class="tsd-anchor"></a>
+				<h3>active<wbr>Info</h3>
+				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
+					<li class="tsd-signature tsd-kind-icon">active<wbr>Info<span class="tsd-signature-symbol">(</span>series<span class="tsd-signature-symbol">: </span><a href="_core_.html#series" class="tsd-signature-type">Series</a>, k<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/5e40bd8/src/Core.ts#L76">Core.ts:76</a></li>
+							</ul>
+						</aside>
+						<div class="tsd-comment tsd-typography">
+							<div class="lead">
+								<p>Active information (AI) was introduced in <a href="">Lizier2012</a> to quantify
+									information storage in distributed computation. This implementation allows the
+									user to provide a time series $X$ and a history length $k$. The active
+									information is then essentially the mutual information between $X$ and its
+								length-$k$ history:</p>
+							</div>
+							<p>$$
+								AI_{X}(k) = \sum_{x_{i+1}, ~ x_i^{(k)}} p(x_{i+1}, x_i^{(k)})
+								\log_2{\frac{p(x_{i+1}, x_i^{(k)})}{p(x_{i+1}) p(x_i^{(k)})}}
+							$$</p>
+						</div>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>series: <a href="_core_.html#series" class="tsd-signature-type">Series</a></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>observations of the source variable</p>
+								</div>
+							</li>
+							<li>
+								<h5>k: <span class="tsd-signature-type">number</span></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>the history length ($k \geq 1$)</p>
+								</div>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						<p>the active information of the time series</p>
+						<a href="#examples" id="examples" style="color: inherit; text-decoration: none;">
+							<h1>Examples:</h1>
+						</a>
+						<pre><code class="language-javascript">&gt; ys = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>]
+&gt; activeInfo(xs, <span class="hljs-number">2</span>)
+<span class="hljs-number">0.3059584928680418</span></code></pre>
+						<a href="#references" id="references" style="color: inherit; text-decoration: none;">
+							<h1>References:</h1>
+						</a>
+						<p>[Lizier2012] Lizier, J.T., Prokopenko, M. and Zomaya, A.Y (2012) &quot;<a href="http://dx.doi.org/10.1016/j.ins.2012.04.016">Local measures of information
+							storage in complex distributed computation</a>&quot;
+						<em>Information Sciences</em>, (208):39-54. doi:10.1016/j.ins.2012.04.016</p>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module">
 				<a name="mutualinfo" class="tsd-anchor"></a>
 				<h3>mutual<wbr>Info</h3>
 				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
@@ -983,7 +1045,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/6f32e8f/src/Core.ts#L43">Core.ts:43</a></li>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/5e40bd8/src/Core.ts#L43">Core.ts:43</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -994,7 +1056,7 @@ img { max-width: 100%; }
 									currently implemented in <strong>informjs</strong>. There are a number of
 									different definitions of mutual information for more than two
 									variables. <a href="https://elife-asu.github.io/Inform">Inform</a> implements
-								it as</p>
+								it as:</p>
 							</div>
 							<p>$$
 								I(X_1, \ldots, X_l) = \sum_{x_{1,i}, \ldots, x_{l,i}} p(x_{1,i}, \ldots, x_{l,i})
@@ -1044,7 +1106,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/6f32e8f/src/Core.ts#L79">Core.ts:79</a></li>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/5e40bd8/src/Core.ts#L114">Core.ts:114</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -1055,12 +1117,13 @@ img { max-width: 100%; }
 									user to provide source $X$ and target $Y$ time series and a history
 									length $k$. The transfer entropy is then essentially the conditional
 									mutual information between $X$ and $Y$, conditioned on the length-$k$
-									history of $Y$:
-									$$
-									T_{X \rightarrow Y}(k) = \sum_{y_{i+1}, y^{(k)}, x_i} p(y_{i+1}, y^{(k)}, x_i)
-									\log_2{\frac{p(y_{i+1}, x_i <del>|</del> y^{(k)})}{p(y_{i+1} <del>|</del> y^{(k)})p(x_i <del>|</del> y^{(k)})}}
-								$$</p>
+								history of $Y$:</p>
 							</div>
+							<p>$$
+								T_{X \rightarrow Y}(k) = \sum_{y_{i+1}, ~ y_i^{(k)}, ~ x_i} p(y_{i+1}, y_i^{(k)}, x_i)
+								\log_2{\frac{p(y_{i+1}, x_i ~ | ~ y_i^{(k)})}
+								{p(y_{i+1} ~ | ~ y_i^{(k)})p(x_i ~ | ~ y_i^{(k)})}}
+							$$</p>
 						</div>
 						<h4 class="tsd-parameters-title">Parameters</h4>
 						<ul class="tsd-parameters">
@@ -1086,14 +1149,14 @@ img { max-width: 100%; }
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
 						<p>the transfer entropy between the variables</p>
 						<a href="#examples" id="examples" style="color: inherit; text-decoration: none;">
-							<h1>Examples:</h1>
+							<h1>Examples</h1>
 						</a>
 						<pre><code class="language-javascript">&gt; xs = [<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>]
 &gt; ys = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>]
 &gt; transferEntropy(xs, ys, <span class="hljs-number">2</span>)
 <span class="hljs-number">0.6792696431662097</span></code></pre>
 						<a href="#references" id="references" style="color: inherit; text-decoration: none;">
-							<h1>References:</h1>
+							<h1>References</h1>
 						</a>
 						<p>[Schreiber2000] Shreiber, T. (2000) &quot;<a href="https://dx.doi.org/10.1103/PhysRevLett.85.461">Measuring information
 							transfer</a>&quot;. <em>Physical Review Letters</em>. <strong>85</strong> (2):
