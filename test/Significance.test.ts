@@ -3,6 +3,7 @@ import * as seed from 'seedrandom';
 
 describe('check exports', () => {
     test('.has mutualInfo', () => expect(Significance.mutualInfo).toBeDefined());
+    test('.has activeInfo', () => expect(Significance.activeInfo).toBeDefined());
     test('.has transferEntropy', () => expect(Significance.transferEntropy).toBeDefined());
 });
 
@@ -27,10 +28,36 @@ describe('mutual information', () => {
         expect(mi.sig.p).toBeCloseTo(p[0], p[1]);
         expect(mi.sig.se).toBeCloseTo(se[0], se[1]);
 
-        mi = mutualInfo(xs, ys, nperm, rng);
+        mi = mutualInfo(ys, xs, nperm, rng);
         expect(mi.value).toBeCloseTo(value[0], value[1]);
         expect(mi.sig.p).toBeCloseTo(p[0], p[1]);
         expect(mi.sig.se).toBeCloseTo(se[0], se[1]);
+    });
+});
+
+describe('active information', () => {
+    const rng = seed('2019');
+    const { activeInfo } = Significance;
+
+    test('.throws for too-few permutations', () => {
+        expect(() => activeInfo([0, 0, 1, 1], 2, -1, rng)).toThrow(/too few/);
+        expect(() => activeInfo([0, 0, 1, 1], 2, 0, rng)).toThrow(/too few/);
+        expect(() => activeInfo([0, 0, 1, 1], 2, 1, rng)).toThrow(/too few/);
+        expect(() => activeInfo([0, 0, 1, 1], 2, 9, rng)).toThrow(/too few/);
+    });
+
+    test.each`
+        xs                          | k    | nperm   | value            | p                | se
+        ${[0, 0, 0, 0, 0, 0, 0, 0]} | ${2} | ${1000} | ${[0, 6]}        | ${[1, 6]}        | ${[0, 6]}
+        ${[0, 0, 0, 0, 0, 0, 0, 1]} | ${2} | ${1000} | ${[0, 6]}        | ${[1, 6]}        | ${[0, 6]}
+        ${[0, 0, 0, 0, 0, 0, 1, 1]} | ${2} | ${1000} | ${[0.316689, 6]} | ${[0.447552, 6]} | ${[0.015716, 6]}
+        ${[0, 0, 0, 0, 0, 1, 1, 1]} | ${2} | ${1000} | ${[0.459148, 6]} | ${[0.402597, 1]} | ${[0.015501, 6]}
+        ${[1, 0, 1, 0, 1, 0, 1, 0]} | ${2} | ${1000} | ${[1, 6]}        | ${[0.056943, 6]} | ${[0.007324, 2]}
+    `('.can', ({ xs, k, nperm, value, p, se }) => {
+        let ai = activeInfo(xs, k, nperm, rng);
+        expect(ai.value).toBeCloseTo(value[0], value[1]);
+        expect(ai.sig.p).toBeCloseTo(p[0], p[1]);
+        expect(ai.sig.se).toBeCloseTo(se[0], se[1]);
     });
 });
 

@@ -9,4 +9,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `activeInfo`
+- Implement `activeInfo`
+- Implement significance testing for `activeInfo`

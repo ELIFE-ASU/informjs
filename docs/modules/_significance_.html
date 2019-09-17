@@ -928,6 +928,9 @@ img { max-width: 100%; }
 			<a href="../interfaces/_significance_.sigvalue.html" class="tsd-kind-icon">Sig<wbr>Value</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
+			<a href="_significance_.html#activeinfo" class="tsd-kind-icon">active<wbr>Info</a>
+		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module">
 			<a href="_significance_.html#mutualinfo" class="tsd-kind-icon">mutual<wbr>Info</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
@@ -952,6 +955,7 @@ img { max-width: 100%; }
 					<section class="tsd-index-section ">
 						<h3>Functions</h3>
 						<ul class="tsd-index-list">
+							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_significance_.html#activeinfo" class="tsd-kind-icon">active<wbr>Info</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_significance_.html#mutualinfo" class="tsd-kind-icon">mutual<wbr>Info</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_significance_.html#transferentropy" class="tsd-kind-icon">transfer<wbr>Entropy</a></li>
 						</ul>
@@ -962,6 +966,88 @@ img { max-width: 100%; }
 		<section class="tsd-panel-group tsd-member-group ">
 			<h2>Functions</h2>
 			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module">
+				<a name="activeinfo" class="tsd-anchor"></a>
+				<h3>active<wbr>Info</h3>
+				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
+					<li class="tsd-signature tsd-kind-icon">active<wbr>Info<span class="tsd-signature-symbol">(</span>xs<span class="tsd-signature-symbol">: </span><a href="_core_.html#series" class="tsd-signature-type">Series</a>, k<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, nperm<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, rng<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_significance_.rng.html" class="tsd-signature-type">RNG</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_significance_.sigvalue.html" class="tsd-signature-type">SigValue</a></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/fd3e679/src/Significance.ts#L174">Significance.ts:174</a></li>
+							</ul>
+						</aside>
+						<div class="tsd-comment tsd-typography">
+							<div class="lead">
+								<p>Computes the active information of a time series, together with statistical
+									significance. To compute the significance, we use a permutation test with
+								<code>nperm</code> permutations.</p>
+							</div>
+							<dl class="tsd-comment-tags">
+								<dt>see</dt>
+								<dd><p><a href="_core_.html#activeInfo"><code>informjs.activeInfo</code></a></p>
+									<a href="#examples" id="examples" style="color: inherit; text-decoration: none;">
+										<h1>Examples:</h1>
+									</a>
+									<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { Significance } <span class="hljs-keyword">from</span> <span class="hljs-string">'inform'</span>;
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> seedrandom <span class="hljs-keyword">from</span> <span class="hljs-string">'seedrandom'</span>;
+
+<span class="hljs-keyword">const</span> { activeInfo } = Significance;
+
+<span class="hljs-keyword">const</span> xs = [<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>,<span class="hljs-number">0</span>];
+
+activeInfo(xs, <span class="hljs-number">2</span>, <span class="hljs-number">100000</span>); <span class="hljs-comment">// Uses a default RNG, automatically seeded</span>
+<span class="hljs-comment">// value will always be the same, but sig will vary based on the seed.</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// {</span>
+<span class="hljs-comment">//   value: 1.0930692077718898,</span>
+<span class="hljs-comment">//   sig: { p: 0.33747662523374766, se: 0.0014952722722481686 }</span>
+<span class="hljs-comment">// }</span>
+
+activeInfo(xs, <span class="hljs-number">2</span>, <span class="hljs-number">100000</span>, seedrandom(<span class="hljs-string">'2019'</span>));
+<span class="hljs-comment">// Should deterministically yield:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// {</span>
+<span class="hljs-comment">//   value: 1.0930692077718898,</span>
+<span class="hljs-comment">//   sig: { p: 0.33684663153368466, se: 0.0014945860449323385 }</span>
+<span class="hljs-comment">// }</span></code></pre>
+								</dd>
+							</dl>
+						</div>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>xs: <a href="_core_.html#series" class="tsd-signature-type">Series</a></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>observations of the first variable</p>
+								</div>
+							</li>
+							<li>
+								<h5>k: <span class="tsd-signature-type">number</span></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>the history length ($k \geq 1$)</p>
+								</div>
+							</li>
+							<li>
+								<h5>nperm: <span class="tsd-signature-type">number</span></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>number of permutations</p>
+								</div>
+							</li>
+							<li>
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> rng: <a href="../interfaces/_significance_.rng.html" class="tsd-signature-type">RNG</a></h5>
+								<div class="tsd-comment tsd-typography">
+									<p>a random number generator</p>
+								</div>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <a href="../interfaces/_significance_.sigvalue.html" class="tsd-signature-type">SigValue</a></h4>
+						<p>the computed active information and estimated statistical significance</p>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module">
 				<a name="mutualinfo" class="tsd-anchor"></a>
 				<h3>mutual<wbr>Info</h3>
 				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
@@ -971,7 +1057,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/5e40bd8/src/Significance.ts#L116">Significance.ts:116</a></li>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/fd3e679/src/Significance.ts#L116">Significance.ts:116</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -1054,7 +1140,7 @@ mutualInfo(xs, ys, <span class="hljs-number">100000</span>, seedrandom(<span cla
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/5e40bd8/src/Significance.ts#L175">Significance.ts:175</a></li>
+								<li>Defined in <a href="https://github.com/elife-asu/informjs/blob/fd3e679/src/Significance.ts#L233">Significance.ts:233</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">

@@ -130,6 +130,64 @@ export function mutualInfo(xs: Series, ys: Series, nperm: number, rng?: RNG): Si
     const se = Math.sqrt((p * (1 - p)) / (nperm + 1));
     return { value: mi, sig: { p, se } };
 }
+
+/**
+ * Computes the active information of a time series, together with statistical
+ * significance. To compute the significance, we use a permutation test with
+ * `nperm` permutations.
+ *
+ * @param xs     observations of the first variable
+ * @param k      the history length ($k \geq 1$)
+ * @param nperm  number of permutations
+ * @param rng    a random number generator
+ * @returns      the computed active information and estimated statistical significance
+ *
+ * @see [`informjs.activeInfo`](_core_.html#activeInfo)
+ *
+ * # Examples:
+ *
+ * ```typescript
+ * import { Significance } from 'inform';
+ * import * as seedrandom from 'seedrandom';
+ *
+ * const { activeInfo } = Significance;
+ *
+ * const xs = [0,0,1,1,2,1,1,0,0];
+ *
+ * activeInfo(xs, 2, 100000); // Uses a default RNG, automatically seeded
+ * // value will always be the same, but sig will vary based on the seed.
+ * //
+ * // {
+ * //   value: 1.0930692077718898,
+ * //   sig: { p: 0.33747662523374766, se: 0.0014952722722481686 }
+ * // }
+ *
+ * activeInfo(xs, 2, 100000, seedrandom('2019'));
+ * // Should deterministically yield:
+ * //
+ * // {
+ * //   value: 1.0930692077718898,
+ * //   sig: { p: 0.33684663153368466, se: 0.0014945860449323385 }
+ * // }
+ * ```
+ */
+export function activeInfo(xs: Series, k: number, nperm: number, rng?: RNG): SigValue {
+    if (nperm < 10) {
+        throw new TypeError(`too few permutations; got ${nperm} < 10`);
+    }
+
+    const as = new Int32Array(xs.slice(0));
+
+    const ai = Core.activeInfo(as, k);
+    let count = 1;
+    for (let i = 0; i < nperm; ++i) {
+        count += Number(Core.activeInfo(shuffleInPlace(as, rng), k) >= ai);
+    }
+    const p = count / (nperm + 1);
+    const se = Math.sqrt((p * (1 - p)) / (nperm + 1));
+    return { value: ai, sig: { p, se } };
+}
+
 /**
  * Computes the transfer entropy between two time series, together
  * with statistical significance. To compute the significance, we use
